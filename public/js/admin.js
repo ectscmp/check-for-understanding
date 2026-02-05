@@ -1,3 +1,4 @@
+let names = [];
 const socket = io();
 
 /* =====================
@@ -7,9 +8,61 @@ const createRoomBtn = document.getElementById("createRoomBtn");
 const roomCodeDisplay = document.getElementById("roomCodeDisplay");
 const startQuizBtn = document.getElementById("startQuizBtn");
 const endQuizBtn = document.getElementById("endQuizBtn");
+const quizInputsContainer = document.getElementById("quizInputs");
+const addQuestionBtn = document.getElementById("addQuestionBtn");
+
+function createQuestionBlock(index) {
+  const div = document.createElement("div");
+  div.className = "question-block";
+
+  div.innerHTML = `
+    <input type="text" class="question" placeholder="Question ${index}" />
+    <input type="text" class="Right" placeholder="Correct Answer" />
+
+    <div class="wrong-answers">
+      <input type="text" class="Wrong" placeholder="Wrong Answer" />
+    </div>
+
+    <button class="addWrongBtn">+ Add Wrong Answer</button>
+    <button class="removeQuestionBtn">🗑 Remove Question</button>
+    <hr />
+  `;
+
+  // add wrong answer dynamically
+  div.querySelector(".addWrongBtn").addEventListener("click", () => {
+    const wrongContainer = div.querySelector(".wrong-answers");
+    // ── REMOVED: the 3-answer limit, now unlimited ──
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "Wrong";
+    input.placeholder = "Wrong Answer";
+    wrongContainer.appendChild(input);
+  });
+
+  // remove question
+  div.querySelector(".removeQuestionBtn").addEventListener("click", () => {
+    div.remove();
+  });
+
+  return div;
+}
+
+function addQuestion() {
+  const count = document.querySelectorAll(".question-block").length + 1;
+  quizInputsContainer.appendChild(createQuestionBlock(count));
+}
+
+// start with one question
+addQuestion();
+addQuestionBtn?.addEventListener("click", addQuestion);
 
 let currentRoom = null;
 window.lastQuizData = null; // store quiz data locally
+
+function update_namelist() {
+  document.getElementById("namelist").innerText = names.join("\n");
+}
 
 createRoomBtn.addEventListener("click", () => {
   let customCode = "";
@@ -26,9 +79,10 @@ createRoomBtn.addEventListener("click", () => {
     }
 
     currentRoom = response.roomCode;
-    socket.emit("join_room", response.roomCode);
-
     roomCodeDisplay.textContent = `Room Code: ${response.roomCode}`;
+
+    // 🔥 ALWAYS request current players
+    socket.emit("get_players", currentRoom);
   });
 });
 
@@ -43,51 +97,51 @@ createQuizBtn.addEventListener("click", () => {
     return;
   }
 
-  const quizInputs = document.querySelectorAll(".question");
-  const rightAnswers = document.querySelectorAll(".Right");
-  const wrongAnswers = document.querySelectorAll(".Wrong");
-
   const quizData = [];
 
-  for (let i = 0; i < quizInputs.length; i++) {
-    const question = quizInputs[i].value.trim();
-    const rightAnswer = rightAnswers[i].value.trim();
-    const wrongAnswer1 = wrongAnswers[i * 3].value.trim();
-    const wrongAnswer2 = wrongAnswers[i * 3 + 1].value.trim();
-    const wrongAnswer3 = wrongAnswers[i * 3 + 2].value.trim();
+  document.querySelectorAll(".question-block").forEach((block) => {
+    const question = block.querySelector(".question")?.value.trim();
+    const correct = block.querySelector(".Right")?.value.trim();
+    const wrongs = [...block.querySelectorAll(".Wrong")]
+      .map((w) => w.value.trim())
+      .filter(Boolean);
 
-    if (
-      question &&
-      rightAnswer &&
-      wrongAnswer1 &&
-      wrongAnswer2 &&
-      wrongAnswer3
-    ) {
-      quizData.push({
-        question,
-        right_answer: rightAnswer,
-        options: [wrongAnswer1, wrongAnswer2, wrongAnswer3, rightAnswer].sort(
-          () => Math.random() - 0.5,
-        ),
-      });
-    }
+    if (!question || !correct) return;
+
+    // ── NEW: collect all wrong answers dynamically ──
+    const wrongsObj = {};
+    wrongs.forEach((wrong, idx) => {
+      wrongsObj[`wrong${idx + 1}`] = wrong;
+    });
+
+    quizData.push({
+      question,
+      choices: {
+        correct,
+        ...wrongsObj, // spread in however many wrong answers exist
+      },
+    });
+  });
+
+  if (!quizData.length) {
+    alert("Add at least one valid question.");
+    return;
   }
 
-  if (quizData.length > 0) {
-    // send to server
-    socket.emit("quizDataUploaded", { roomCode: currentRoom, quizData });
+  socket.emit("quizDataUploaded", {
+    roomCode: currentRoom,
+    quizData,
+  });
 
-    window.lastQuizData = quizData;
+  window.lastQuizData = quizData;
 
-    document.getElementById("written").textContent = JSON.stringify(
-      quizData,
-      null,
-      2,
-    );
-    alert("Quiz uploaded successfully!");
-  } else {
-    alert("Please fill in all fields.");
-  }
+  document.getElementById("written").textContent = JSON.stringify(
+    quizData,
+    null,
+    2,
+  );
+
+  alert("Quiz uploaded successfully!");
 });
 
 /* =====================
@@ -144,8 +198,10 @@ startQuizBtn.addEventListener("click", () => {
     return;
   }
 
-  // Ensure server has quiz data
-  socket.emit("quizDataUploaded", window.lastQuizData);
+  socket.emit("quizDataUploaded", {
+    roomCode: currentRoom,
+    quizData: window.lastQuizData,
+  });
 
   // Start the quiz
   socket.emit("start_quiz", currentRoom);
@@ -197,6 +253,7 @@ endQuizBtn.addEventListener("click", () => {
     alert("Not In A Room");
   }
 });
+
 socket.on("connect", () => console.log("Connected:", socket.id));
 socket.on("disconnect", () => console.log("Disconnected"));
 socket.on("error", (err) => console.error("Socket error:", err));
@@ -209,13 +266,20 @@ socket.on("question", (data) => {
   console.log("✅ Admin received question:", data);
 });
 
-socket.on("room_joined", (roomCode) => {
+socket.on("room_joined", (roomCode, username) => {
   console.log("✅ Admin joined room:", roomCode);
 });
 
-let lastReportData = [];
+// ── NEW: Listen for answer progress updates ──
+socket.on("answer_progress", ({ answered, total }) => {
+  const progressEl = document.getElementById("answerProgress");
+  if (progressEl) {
+    progressEl.textContent = `${answered} / ${total} answered`;
+  }
+});
 
-socket.on("adminReport", (reports) => {
+function update_report(reports) {
+  let lastReportData = [];
   console.log("Admin Report:", reports);
 
   lastReportData = reports;
@@ -249,6 +313,10 @@ socket.on("adminReport", (reports) => {
 
   const container = document.getElementById("adminReportContainer");
   container.innerHTML = reportHTML;
+}
+
+socket.on("adminReport", (reports) => {
+  update_report(reports);
 });
 
 hide_btn = document.getElementById("Hide");
@@ -280,6 +348,7 @@ infoModal.addEventListener("click", (e) => {
     infoModal.classList.add("hidden");
   }
 });
+
 document.getElementById("downloadReportBtn").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(lastReportData, null, 2)], {
     type: "application/json",
@@ -293,4 +362,17 @@ document.getElementById("downloadReportBtn").addEventListener("click", () => {
   a.click();
 
   URL.revokeObjectURL(url);
+});
+
+socket.on("player_list", ({ players }) => {
+  console.log("ADMIN players:", players);
+  names = players.map((p) => p.name);
+  update_namelist();
+  socket.emit("get_players", currentRoom);
+});
+
+socket.on("player_joined", ({ players }) => {
+  console.log("🟢 Player joined:", players);
+  names = players.map((p) => p.name);
+  update_namelist();
 });

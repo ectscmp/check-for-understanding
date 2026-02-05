@@ -1,0 +1,54 @@
+{
+  "quiz": [
+    {
+      "id": 1,
+      "question": "Which programming language is commonly used for data analysis and machine learning?",
+      "choices": {
+        "correct": "Python",
+        "wrong1": "HTML",
+        "wrong2": "CSS",
+        "wrong3": "JavaScript"
+      }
+    },
+    {
+      "id": 2,
+      "question": "Which language is used to structure content on the web?",
+      "choices": {
+        "correct": "HTML",
+        "wrong1": "Python",
+        "wrong2": "CSS",
+        "wrong3": "Node.js"
+      }
+    },
+    {
+      "id": 3,
+      "question": "Which language is mainly responsible for styling web pages?",
+      "choices": {
+        "correct": "CSS",
+        "wrong1": "HTML",
+        "wrong2": "Python",
+        "wrong3": "JavaScript"
+      }
+    },
+    {
+      "id": 4,
+      "question": "Which language adds interactivity to websites?",
+      "choices": {
+        "correct": "JavaScript",
+        "wrong1": "HTML",
+        "wrong2": "CSS",
+        "wrong3": "Python"
+      }
+    },
+    {
+      "id": 5,
+      "question": "Node.js is primarily used to run which language on the server?",
+      "choices": {
+        "correct": "JavaScript",
+        "wrong1": "Python",
+        "wrong2": "HTML",
+        "wrong3": "CSS"
+      }
+    }
+  ]
+}

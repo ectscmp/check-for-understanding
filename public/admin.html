@@ -9,7 +9,13 @@
 
   <body>
     <header class="top-bar">
-      <h1>Admin Dashboard</h1>
+      <div>
+        <h1>Admin Dashboard</h1>
+
+        <a id="back" href="./index.html">
+          <button id="backbtn">Join a Quiz</button></a
+        >
+      </div>
       <div class="top-bar-actions">
         <button id="themeToggle">🌙</button>
         <button id="Information">
@@ -58,35 +64,23 @@
         <button id="startQuizBtn">Start Quiz</button>
         <button id="endQuizBtn">End Quiz</button>
         <button id="downloadReportBtn">Download Report</button>
+        <h1>Name List</h1>
+        <p id="namelist"></p>
       </section>
 
       <!-- CREATE QUIZ -->
       <section class="card" id="create">
         <h3>Create A Quiz</h3>
-        <div id="quizInputs">
-          <input type="text" class="question" placeholder="Question 1" />
-          <input type="text" class="Right" placeholder="Right Answer" />
-          <input type="text" class="Wrong" placeholder="Wrong Answer 1" />
-          <input type="text" class="Wrong" placeholder="Wrong Answer 2" />
-          <input type="text" class="Wrong" placeholder="Wrong Answer 3" />
 
-          <input type="text" class="question" placeholder="Question 2" />
-          <input type="text" class="Right" placeholder="Right Answer" />
-          <input type="text" class="Wrong" placeholder="Wrong Answer 1" />
-          <input type="text" class="Wrong" placeholder="Wrong Answer 2" />
-          <input type="text" class="Wrong" placeholder="Wrong Answer 3" />
+        <div id="quizInputs"></div>
 
-          <input type="text" class="question" placeholder="Question 3" />
-          <input type="text" class="Right" placeholder="Right Answer" />
-          <input type="text" class="Wrong" placeholder="Wrong Answer 1" />
-          <input type="text" class="Wrong" placeholder="Wrong Answer 2" />
-          <input type="text" class="Wrong" placeholder="Wrong Answer 3" />
-
-          <pre class="hidden" id="written"></pre>
-        </div>
+        <button id="addQuestionBtn">➕ Add Question</button>
         <button id="createQuizBtn">Create Quiz</button>
         <button id="Hide">Hide Form</button>
+
+        <pre class="hidden" id="written"></pre>
       </section>
+
       <button id="unhide" class="hidden">Show Form</button>
 
       <!-- UPLOAD QUIZ JSON -->

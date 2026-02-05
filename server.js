@@ -68,37 +68,48 @@ function endQuiz(roomCode) {
     username: player.name,
     score: player.score,
     totalQuestions: room.quizData.length,
-    questions: room.quizData.map((q, index) => ({
-      questionNumber: index + 1,
-      question: q.question,
-      correctAnswer: q.choices.correct,
-      playerAnswer: player.answers[index] || "No answer",
-      isCorrect: player.answers[index] === q.choices.correct,
-    })),
+    questions: room.quizData.map((q, index) => {
+      // ── Flexible correct answer lookup ──
+      const correctAnswer = q.choices?.correct || q.correctAnswer;
+      return {
+        questionNumber: index + 1,
+        question: q.question,
+        correctAnswer,
+        playerAnswer: player.answers[index] || "No answer",
+        isCorrect: player.answers[index] === correctAnswer,
+      };
+    }),
   }));
 
   io.to(room.adminId).emit("adminReport", detailedReports);
 
   console.log(`Quiz ended in room ${roomCode}`);
 }
+
 function sendQuestion(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return;
 
   const questionData = room.quizData[room.currentQuestion];
   if (!questionData) {
-    // Call endQuiz instead of emitting directly
     endQuiz(roomCode);
     return;
   }
 
-  const choices = questionData.choices;
-  const options = [
-    choices.correct,
-    choices.wrong1,
-    choices.wrong2,
-    choices.wrong3,
-  ].sort(() => Math.random() - 0.5);
+  // ── Handle variable number of choices ──
+  let options = [];
+
+  if (questionData.choices) {
+    // Format: { choices: { correct, wrong1, wrong2, ... } }
+    const { correct, ...wrongs } = questionData.choices;
+    options = [correct, ...Object.values(wrongs).filter(Boolean)];
+  } else if (questionData.options) {
+    // Alternative format: { options: ["answer1", "answer2", ...], correctAnswer: "answer1" }
+    options = questionData.options;
+  }
+
+  // Shuffle the options
+  options = options.sort(() => Math.random() - 0.5);
 
   io.to(roomCode).emit("question", {
     question: questionData.question,
@@ -108,18 +119,29 @@ function sendQuestion(roomCode) {
 
   room.questionStartTime = Date.now();
 }
+
+// ─── All socket handlers live inside this single callback ───────────────────
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
 
+  // ── Get current player list ──────────────────────────────────────────────
+  socket.on("get_players", (roomCode) => {
+    const room = rooms.get(roomCode);
+    if (!room) return;
+
+    socket.emit("player_list", {
+      players: Array.from(room.players.values()),
+    });
+  });
+
+  // ── Create a room ────────────────────────────────────────────────────────
   socket.on("create_room", (requestedCode, callback) => {
     let roomCode = requestedCode?.trim().toUpperCase();
 
-    // If no code was provided, generate one
     if (!roomCode) {
       roomCode = generateRoomCode();
     }
 
-    // Prevent duplicate rooms
     if (rooms.has(roomCode)) {
       return callback?.({ error: "Room code already exists" });
     }
@@ -140,63 +162,23 @@ io.on("connection", (socket) => {
     console.log(`Room created: ${roomCode}`);
     callback?.({ roomCode });
   });
-  socket.on("submit_answer", ({ roomCode, answer }) => {
-    const room = rooms.get(roomCode);
-    if (!room) return;
 
-    const player = room.players.get(socket.id);
-    if (!player) return;
-
-    const questionData = room.quizData[room.currentQuestion];
-    if (!questionData) return;
-
-    player.answers[room.currentQuestion] = answer;
-
-    // Check against choices.correct
-    if (answer === questionData.choices.correct) {
-      player.score += 1;
-    }
-
-    // Check if all players answered
-    const allAnswered = Array.from(room.players.values()).every(
-      (p) =>
-        p.id === room.adminId || p.answers[room.currentQuestion] !== undefined,
-    );
-
-    if (allAnswered) {
-      // Send results
-      io.to(roomCode).emit("question_results", {
-        correctAnswer: questionData.choices.correct, // Changed from right_answer
-        scores: Array.from(room.players.values()).map((p) => ({
-          name: p.name,
-          score: p.score,
-        })),
-      });
-
-      // Move to next question
-      room.currentQuestion += 1;
-
-      // Wait 2 seconds before sending next question
-      setTimeout(() => sendQuestion(roomCode), 2000);
-    }
-  });
-  socket.on("quizDataUploaded", ({ roomCode, quizData }) => {
-    const room = rooms.get(roomCode);
-    if (!room) return;
-
-    room.quizData = quizData;
-    room.currentQuestion = 0;
-
-    console.log("Stored quiz:", quizData);
-  });
-
-  // Join existing room
+  // ── Join an existing room ────────────────────────────────────────────────
   socket.on("join_room", ({ roomCode, username }) => {
     const room = rooms.get(roomCode);
+
+    console.log("👤 JOIN:", {
+      roomCode,
+      username,
+      adminId: room?.adminId,
+      socketId: socket.id,
+    });
+
     if (!room) {
       socket.emit("error", { message: "Room not found" });
       return;
     }
+
     if (room.started) {
       socket.emit("error", { message: "Quiz already started" });
       return;
@@ -207,6 +189,17 @@ io.on("connection", (socket) => {
 
     // Don't add admin as a player
     if (socket.id !== room.adminId) {
+      // ── Check for duplicate username ──
+      const nameTaken = Array.from(room.players.values()).some(
+        (p) => p.name.toLowerCase() === (username || "").toLowerCase(),
+      );
+      if (nameTaken) {
+        socket.emit("error", {
+          message: "That username is already taken. Pick another one.",
+        });
+        return;
+      }
+
       room.players.set(socket.id, {
         id: socket.id,
         name: username || `Player ${room.players.size + 1}`,
@@ -222,15 +215,19 @@ io.on("connection", (socket) => {
       players: Array.from(room.players.values()),
     });
   });
-  socket.on("endquiz", (roomCode) => {
+
+  // ── Upload quiz data ─────────────────────────────────────────────────────
+  socket.on("quizDataUploaded", ({ roomCode, quizData }) => {
     const room = rooms.get(roomCode);
     if (!room) return;
-    if (socket.id !== room.adminId) return;
 
-    endQuiz(roomCode);
-    socket.emit("quizEnded", roomCode);
+    room.quizData = quizData;
+    room.currentQuestion = 0;
+
+    console.log("Stored quiz:", quizData);
   });
-  // Handle quiz creation
+
+  // ── Create quiz data ─────────────────────────────────────────────────────
   socket.on("quizDataCreated", (quizData) => {
     const roomCode = socket.roomCode;
     const room = rooms.get(roomCode);
@@ -244,7 +241,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Start quiz
+  // ── Start quiz ───────────────────────────────────────────────────────────
   socket.on("start_quiz", (roomCode) => {
     console.log("start_quiz received with:", roomCode);
 
@@ -277,17 +274,73 @@ io.on("connection", (socket) => {
     io.to(roomCode).emit("quizStarted", {
       totalQuestions: room.quizData.length,
     });
+    socket.emit("adminReport");
 
     sendQuestion(roomCode);
   });
 
-  // Send question to all players in room
+  // ── Submit answer ────────────────────────────────────────────────────────
+  socket.on("submit_answer", ({ roomCode, answer }) => {
+    const room = rooms.get(roomCode);
+    if (!room) return;
 
-  // Next question
+    const player = room.players.get(socket.id);
+    if (!player) return;
 
-  // End quiz and send results
+    const questionData = room.quizData[room.currentQuestion];
+    if (!questionData) return;
 
-  // Disconnect
+    player.answers[room.currentQuestion] = answer;
+
+    // ── Support both formats ──
+    const correctAnswer =
+      questionData.choices?.correct || questionData.correctAnswer;
+
+    if (answer === correctAnswer) {
+      player.score += 1;
+    }
+
+    // ── Broadcast answer progress ──
+    const answeredCount = Array.from(room.players.values()).filter(
+      (p) => p.answers[room.currentQuestion] !== undefined,
+    ).length;
+    io.to(roomCode).emit("answer_progress", {
+      answered: answeredCount,
+      total: room.players.size,
+    });
+
+    // Check if all players answered
+    const allAnswered = Array.from(room.players.values()).every(
+      (p) =>
+        p.id === room.adminId || p.answers[room.currentQuestion] !== undefined,
+    );
+
+    if (allAnswered) {
+      io.to(roomCode).emit("question_results", {
+        correctAnswer,
+        scores: Array.from(room.players.values()).map((p) => ({
+          name: p.name,
+          score: p.score,
+        })),
+      });
+
+      room.currentQuestion += 1;
+
+      setTimeout(() => sendQuestion(roomCode), 2000);
+    }
+  });
+
+  // ── End quiz manually ────────────────────────────────────────────────────
+  socket.on("endquiz", (roomCode) => {
+    const room = rooms.get(roomCode);
+    if (!room) return;
+    if (socket.id !== room.adminId) return;
+
+    endQuiz(roomCode);
+    socket.emit("quizEnded", roomCode);
+  });
+
+  // ── Disconnect ───────────────────────────────────────────────────────────
   socket.on("disconnect", () => {
     console.log(`User disconnected: ${socket.id}`);
 
@@ -297,13 +350,15 @@ io.on("connection", (socket) => {
       if (room) {
         room.players.delete(socket.id);
 
-        // Notify remaining players
+        io.to(roomCode).emit("player_list", {
+          players: Array.from(room.players.values()),
+        });
+
         io.to(roomCode).emit("player_left", {
           playerId: socket.id,
           playerCount: room.players.size,
         });
 
-        // Delete room if empty
         if (room.players.size === 0) {
           rooms.delete(roomCode);
           console.log(`Room ${roomCode} deleted (empty)`);
@@ -311,7 +366,7 @@ io.on("connection", (socket) => {
       }
     }
   });
-});
+}); // ── end of io.on("connection") ─────────────────────────────────────────────
 
 // Routes
 app.get("/", (req, res) => {

@@ -14,6 +14,7 @@ let hasAnswered = false;
 adminbtn.addEventListener("click", () => {
   window.location.href = "admin.html";
 });
+
 /* =====================
    JOIN ROOM
 ===================== */
@@ -53,6 +54,12 @@ socket.on("question", ({ question, options, questionNumber }) => {
   gameArea.style.display = "block";
   answersEl.innerHTML = "";
 
+  // ── Reset progress display for new question ──
+  const progressEl = document.getElementById("progress");
+  if (progressEl) {
+    progressEl.textContent = "0 / 0 answered";
+  }
+
   questionEl.textContent = `Q${questionNumber}: ${question}`;
 
   options.forEach((option) => {
@@ -82,6 +89,17 @@ function disableButtons() {
     btn.disabled = true;
   });
 }
+
+/* =====================
+   ANSWER PROGRESS
+===================== */
+
+socket.on("answer_progress", ({ answered, total }) => {
+  const progressEl = document.getElementById("progress");
+  if (progressEl) {
+    progressEl.textContent = `${answered} / ${total} answered`;
+  }
+});
 
 /* =====================
    RESULTS

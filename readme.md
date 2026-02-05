@@ -4,13 +4,9 @@ admin
 
 - active display showing a persons username and which question they are on, once user is finished it shows accuracy
 - ability to force nicknames upon user for moderation reasons
-- ability to chose between name list or custom userames
-
-  users
+- ability to chose between name list or custom usernames
 
 server side
-
-- room codes (if none provided defualt to CMP)
 
 Done:
 
@@ -22,3 +18,17 @@ Done:
 - room names
 - user is shown 1 question at a time and cant move on until answered
 - do not check accuracy till end
+- room codes (if none provided defualt to CMP)
+
+TO-DO
+Figure out what issue was happening with creating quiz
+better layout for simplicity
+Ability to paste in json text
+Force instructions upon first launch (save launch data as cookie that expiries every 48hrs)
+Player reports update after each question
+Hide Join section after joining.
+Ability for user to leave
+Logs report when user leaves
+ability to create public rooms which can be found via a room list
+
+fix constant sending of player list to end on start of quiz

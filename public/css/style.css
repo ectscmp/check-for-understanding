@@ -267,3 +267,10 @@ body.light .modal-content {
 #closeInfoModal {
   width: auto;
 }
+#back {
+  text-decoration: none;
+  color: black;
+}
+#backbtn {
+  width: 100px;
+}
