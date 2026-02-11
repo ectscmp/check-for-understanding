@@ -2,44 +2,81 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <title>Quiz App - Join Room</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="./css/style.css" />
-    <title>User Dashboard</title>
   </head>
 
   <body>
+    <header class="top-bar">
+      <div>
+        <h1>Quiz App</h1>
+      </div>
+      <div class="top-bar-actions">
+        <button id="admin_btn">Admin Dashboard</button>
+        <button id="themeToggle">🌙</button>
+      </div>
+    </header>
+
     <main>
       <div class="card">
-        <h1>Join Quiz</h1>
+        <h2 class="hide_on_join">Join a Quiz Room</h2>
 
-        <!-- JOIN ROOM -->
         <input
+          type="text"
+          id="username"
+          placeholder="Enter your name"
           class="hide_on_join"
-          id="room_code_input"
-          placeholder="Room Code"
         />
-        <input class="hide_on_join" id="username" placeholder="Username" />
 
-        <button class="hide_on_join" id="join_btn">Join Room</button>
+        <input
+          type="text"
+          id="room_code_input"
+          placeholder="Enter room code"
+          class="hide_on_join"
+        />
 
-        <div id="error" class="error hidden"></div>
+        <button id="join_btn" class="hide_on_join">Join Room</button>
 
-        <button class="hide_on_join" id="admin_btn">Admin Panel</button>
-        <div>
-          <p id="status"></p>
-        </div>
-        <!-- QUIZ AREA -->
-        <div id="game" style="display: none">
-          <p id="progress">0 answered</p>
+        <div><h2 id="status"></h2></div>
+      </div>
+
+      <!-- PUBLIC ROOMS LIST -->
+      <div class="card hide_on_join">
+        <h2>Public Rooms</h2>
+        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 15px">
+          Join an open quiz room below or enter a private room code above
+        </p>
+        <button
+          id="refreshRoomsBtn"
+          style="margin-bottom: 15px; width: auto; padding: 8px 16px"
+        >
+          🔄 Refresh
+        </button>
+        <div id="publicRoomsList"></div>
+      </div>
+
+      <div id="game" style="display: none">
+        <div class="card">
           <h2 id="question"></h2>
-          <div id="answers" class="answers"></div>
+          <div id="answers"></div>
+          <p
+            id="progress"
+            style="text-align: center; margin-top: 15px; color: #94a3b8"
+          ></p>
         </div>
       </div>
     </main>
 
+    <!-- Player Report will be dynamically inserted here -->
+    <div id="playerReportContainer"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/index.js"></script>
+
     <footer class="footer">
       <div class="footer-content">
-        <p>Developed By Coby Hughes</p>
+        <p>Developed by Coby Hughes</p>
         <a
           href="https://github.com/c-o-b-a-x"
           target="_blank"
@@ -53,8 +90,5 @@
         </a>
       </div>
     </footer>
-
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="js/index.js"></script>
   </body>
 </html>

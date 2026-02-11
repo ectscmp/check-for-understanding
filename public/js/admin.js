@@ -1,5 +1,6 @@
 let names = [];
 const socket = io();
+let lastReportData = []; // ✅ Move to top-level scope
 
 /* =====================
    ROOM CREATION
@@ -66,6 +67,9 @@ function update_namelist() {
 
 createRoomBtn.addEventListener("click", () => {
   let customCode = "";
+  const roomNameInput = document.getElementById("roomName");
+  const isPublic = document.getElementById("publicRadio").checked;
+
   if (!roomInput.value) {
     customCode = "CMP";
   } else {
@@ -77,9 +81,17 @@ createRoomBtn.addEventListener("click", () => {
       alert(response.error);
       return;
     }
-
+    document.getElementById("json").classList.remove("hidden");
+    document.getElementById("create").classList.remove("hidden");
     currentRoom = response.roomCode;
     roomCodeDisplay.textContent = `Room Code: ${response.roomCode}`;
+
+    // Update room settings with visibility and name
+    socket.emit("update_room_settings", {
+      roomCode: currentRoom,
+      isPublic: isPublic,
+      roomName: roomNameInput.value.trim() || "Unnamed Room",
+    });
 
     // 🔥 ALWAYS request current players
     socket.emit("get_players", currentRoom);
@@ -228,6 +240,12 @@ function getCookie(name) {
 function applyTheme(theme) {
   document.body.classList.remove("light", "dark");
   document.body.classList.add(theme);
+
+  // Update theme button emoji
+  const themeBtn = document.getElementById("themeToggle");
+  if (themeBtn) {
+    themeBtn.textContent = theme === "light" ? "🌙" : "☀️";
+  }
 }
 
 const savedTheme = getCookie("theme") || "light";
@@ -238,6 +256,162 @@ document.getElementById("themeToggle").onclick = () => {
   applyTheme(newTheme);
   setCookie("theme", newTheme);
 };
+function playNukeAnimation() {
+  // Create overlay
+  const overlay = document.createElement("div");
+  overlay.id = "nukeOverlay";
+  overlay.innerHTML = `
+    <div class="nuke-flash"></div>
+    <div class="nuke-shockwave"></div>
+    <div class="nuke-shockwave" style="animation-delay: 0.2s;"></div>
+    <div class="nuke-shockwave" style="animation-delay: 0.4s;"></div>
+    <div class="nuke-text">💥 NUKE INCOMING! 💥</div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Add shake effect
+  document.body.style.animation = "shake 0.5s infinite";
+
+  // Remove overlay, then play video
+  setTimeout(() => {
+    overlay.remove();
+    document.body.style.animation = "";
+
+    // Create video
+    const video = document.createElement("video");
+    video.src = "./nuke.mp4";
+    video.autoplay = true;
+    video.muted = true; // required for autoplay
+    video.playsInline = true;
+    video.controls = false;
+
+    // Fullscreen styling
+    Object.assign(video.style, {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "100vw",
+      height: "100vh",
+      objectFit: "cover",
+      zIndex: "9999",
+      background: "black",
+    });
+
+    document.body.appendChild(video);
+
+    // Request fullscreen
+    if (video.requestFullscreen) {
+      video.requestFullscreen().catch(() => {});
+    }
+
+    video.play();
+
+    // Optional: remove video when finished
+    video.onended = () => {
+      video.remove();
+    };
+  }, 5000);
+}
+
+// Add styles dynamically
+const nukeStyles = document.createElement("style");
+nukeStyles.textContent = `
+  #nukeOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .nuke-flash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, 
+      rgba(255, 255, 255, 1) 0%, 
+      rgba(255, 200, 0, 0.8) 20%, 
+      rgba(255, 100, 0, 0.4) 50%,
+      transparent 70%
+    );
+    animation: flash 1s ease-out;
+  }
+
+  .nuke-shockwave {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    border: 5px solid rgba(255, 100, 0, 0.8);
+    border-radius: 50%;
+    animation: shockwave 2s ease-out;
+  }
+
+  .nuke-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+    font-weight: bold;
+    color: #ff0000;
+    text-shadow: 0 0 20px #ff0000, 0 0 40px #ff6600, 0 0 60px #ffaa00;
+    animation: pulse 0.5s infinite, textShake 0.1s infinite;
+    z-index: 10;
+  }
+
+  @keyframes flash {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @keyframes shockwave {
+    0% {
+      width: 100px;
+      height: 100px;
+      opacity: 1;
+    }
+    100% {
+      width: 200vmax;
+      height: 200vmax;
+      opacity: 0;
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
+    10% { transform: translateX(-5px) translateY(-5px) rotate(-1deg); }
+    20% { transform: translateX(5px) translateY(5px) rotate(1deg); }
+    30% { transform: translateX(-5px) translateY(5px) rotate(-1deg); }
+    40% { transform: translateX(5px) translateY(-5px) rotate(1deg); }
+    50% { transform: translateX(-5px) translateY(-5px) rotate(-1deg); }
+    60% { transform: translateX(5px) translateY(5px) rotate(1deg); }
+    70% { transform: translateX(-5px) translateY(5px) rotate(-1deg); }
+    80% { transform: translateX(5px) translateY(-5px) rotate(1deg); }
+    90% { transform: translateX(-5px) translateY(-5px) rotate(-1deg); }
+  }
+
+  @keyframes textShake {
+    0%, 100% { transform: translate(-50%, -50%); }
+    25% { transform: translate(-52%, -50%); }
+    50% { transform: translate(-50%, -52%); }
+    75% { transform: translate(-48%, -50%); }
+  }
+`;
+document.head.appendChild(nukeStyles);
 
 /* =====================
    SOCKET EVENTS
@@ -257,6 +431,34 @@ endQuizBtn.addEventListener("click", () => {
 socket.on("connect", () => console.log("Connected:", socket.id));
 socket.on("disconnect", () => console.log("Disconnected"));
 socket.on("error", (err) => console.error("Socket error:", err));
+socket.on("quizAccuracy", (accuracyData) => {
+  const ctx = document.getElementById("accuracyChart");
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: accuracyData.map((q) => `Q${q.questionNumber}`),
+      datasets: [
+        {
+          label: "Accuracy (%)",
+          data: accuracyData.map((q) => q.accuracyPercent),
+        },
+      ],
+    },
+    options: {
+      scales: {
+        y: { min: 0, max: 100 },
+      },
+    },
+  });
+});
+
+// ── Listen for nuke trigger from server ──
+socket.on("triggerNuke", () => {
+  console.log("💥 NUKE TRIGGERED!");
+  playNukeAnimation();
+});
 
 socket.on("quizStarted", (data) => {
   console.log("✅ Admin received quizStarted:", data);
@@ -279,10 +481,9 @@ socket.on("answer_progress", ({ answered, total }) => {
 });
 
 function update_report(reports) {
-  let lastReportData = [];
-  console.log("Admin Report:", reports);
+  console.log("📊 Admin Report Update:", reports);
 
-  lastReportData = reports;
+  lastReportData = reports; // ✅ Update global variable
 
   let reportHTML = "<h2>Quiz Results Report</h2>";
 
@@ -341,11 +542,13 @@ infoBtn.addEventListener("click", () => {
 
 closeInfoModal.addEventListener("click", () => {
   infoModal.classList.add("hidden");
+  setCookie("info-seen", "true");
 });
 
 infoModal.addEventListener("click", (e) => {
   if (e.target === infoModal) {
     infoModal.classList.add("hidden");
+    setCookie("info-seen", "true");
   }
 });
 
@@ -368,11 +571,67 @@ socket.on("player_list", ({ players }) => {
   console.log("ADMIN players:", players);
   names = players.map((p) => p.name);
   update_namelist();
-  socket.emit("get_players", currentRoom);
 });
 
 socket.on("player_joined", ({ players }) => {
   console.log("🟢 Player joined:", players);
   names = players.map((p) => p.name);
   update_namelist();
+});
+
+function hasValidInfoCookie() {
+  const cookieValue = getCookie("info-seen");
+  return cookieValue === "true";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (!hasValidInfoCookie()) {
+    infoModal.classList.remove("hidden");
+  }
+});
+
+function invalidateinfocookie() {
+  setCookie("info-seen", "false");
+}
+
+const jsonTextarea = document.getElementById("jsonTextarea");
+const loadJsonBtn = document.getElementById("loadJsonBtn");
+const pasteOutput = document.getElementById("pasteOutput");
+
+loadJsonBtn.addEventListener("click", () => {
+  const jsonText = jsonTextarea.value.trim();
+
+  if (!jsonText) {
+    alert("Please paste some JSON first!");
+    return;
+  }
+
+  if (!currentRoom) {
+    alert("Create a room first!");
+    return;
+  }
+
+  try {
+    const quizData = JSON.parse(jsonText);
+    const quizArray = quizData.quiz || quizData;
+
+    socket.emit("quizDataUploaded", {
+      roomCode: currentRoom,
+      quizData: quizArray,
+    });
+
+    window.lastQuizData = quizArray;
+
+    pasteOutput.textContent = "✅ Quiz loaded successfully!";
+    pasteOutput.style.color = "green";
+
+    document.getElementById("output").textContent = JSON.stringify(
+      quizArray,
+      null,
+      2,
+    );
+  } catch (err) {
+    pasteOutput.textContent = "❌ Invalid JSON format: " + err.message;
+    pasteOutput.style.color = "red";
+  }
 });

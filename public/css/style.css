@@ -274,3 +274,248 @@ body.light .modal-content {
 #backbtn {
   width: 100px;
 }
+
+/* =========================
+   PLAYER REPORT STYLES
+   ========================= */
+#playerReportContainer {
+  background-color: #020617;
+  color: #e5e7eb;
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 700px;
+  border: 2px solid #38bdf8;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+#playerReportContainer h2 {
+  color: #38bdf8;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 24px;
+}
+
+#playerReportContainer h3 {
+  text-align: center;
+  color: #e5e7eb;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #334155;
+}
+
+.report-question {
+  border: 1px solid #334155;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 6px;
+  background-color: #0f172a;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.report-question:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.report-question p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.report-question strong {
+  color: #38bdf8;
+}
+
+.report-question-number {
+  font-size: 14px;
+  color: #94a3b8;
+  font-weight: normal;
+}
+
+.report-correct {
+  color: #22c55e !important;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.report-incorrect {
+  color: #ef4444 !important;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.report-your-answer {
+  color: #e5e7eb;
+}
+
+.report-correct-answer {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+#downloadPlayerReportBtn {
+  margin-top: 20px;
+  padding: 12px 24px;
+  background-color: #38bdf8;
+  color: #020617;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: auto;
+}
+
+#downloadPlayerReportBtn:hover {
+  background-color: #0ea5e9;
+  transform: scale(1.05);
+}
+
+#downloadPlayerReportBtn:active {
+  transform: scale(0.98);
+}
+
+/* =========================
+   LIGHT THEME - PLAYER REPORT
+   ========================= */
+body.light #playerReportContainer {
+  background-color: #ffffff;
+  color: #020617;
+  border-color: #0ea5e9;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+body.light #playerReportContainer h2 {
+  color: #0284c7;
+}
+
+body.light #playerReportContainer h3 {
+  color: #020617;
+  border-bottom-color: #cbd5e1;
+}
+
+body.light .report-question {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+body.light .report-question:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+body.light .report-question strong {
+  color: #0284c7;
+}
+
+body.light .report-question-number {
+  color: #64748b;
+}
+
+body.light .report-correct {
+  color: #16a34a !important;
+}
+
+body.light .report-incorrect {
+  color: #dc2626 !important;
+}
+
+body.light .report-your-answer {
+  color: #020617;
+}
+
+body.light .report-correct-answer {
+  color: #64748b;
+}
+
+body.light #downloadPlayerReportBtn {
+  background-color: #0ea5e9;
+  color: #ffffff;
+}
+
+body.light #downloadPlayerReportBtn:hover {
+  background-color: #0284c7;
+}
+
+/* =========================
+   PUBLIC ROOMS LIST
+   ========================= */
+.room-list {
+  max-width: 100%;
+  margin: 0;
+}
+
+.room-item {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.room-item:hover {
+  transform: translateY(-2px);
+  border-color: #38bdf8;
+}
+
+.room-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.room-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.room-actions button {
+  margin-top: 0;
+}
+
+/* Light theme for public rooms */
+body.light .room-item {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+body.light .room-item:hover {
+  border-color: #0ea5e9;
+}
+
+/* Radio button styling */
+input[type="radio"] {
+  width: auto;
+  cursor: pointer;
+  accent-color: #38bdf8;
+}
+
+body.light input[type="radio"] {
+  accent-color: #0ea5e9;
+}
+body.light #jsonTextarea {
+  background-color: white;
+  color: black;
+}
+#jsonTextarea {
+  background-color: black;
+  color: white;
+}

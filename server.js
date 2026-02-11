@@ -3,6 +3,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import readline from "readline";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,11 +24,14 @@ const rooms = new Map();
 // Room structure:
 // {
 //   roomCode: string,
+//   roomName: string,
 //   quizData: object,
 //   players: Map<socketId, {name, score, answers}>,
 //   currentQuestion: number,
 //   started: boolean,
-//   questionStartTime: timestamp
+//   questionStartTime: timestamp,
+//   isPublic: boolean,
+//   adminId: string
 // }
 
 // Generate random room code
@@ -43,6 +47,69 @@ function shuffleArray(array) {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+}
+function generateQuizAccuracy(room) {
+  const totalQuestions = room.quizData.length;
+  const totalPlayers = room.players.size;
+
+  const accuracyData = [];
+
+  for (let i = 0; i < totalQuestions; i++) {
+    const questionData = room.quizData[i];
+
+    const correctAnswer =
+      questionData.choices?.correct || questionData.correctAnswer;
+
+    let correctCount = 0;
+
+    room.players.forEach((player) => {
+      if (player.answers[i] === correctAnswer) {
+        correctCount++;
+      }
+    });
+
+    const accuracy =
+      totalPlayers > 0 ? Math.round((correctCount / totalPlayers) * 100) : 0;
+
+    accuracyData.push({
+      questionNumber: i + 1,
+      question: questionData.question,
+      correctCount,
+      totalPlayers,
+      accuracyPercent: accuracy,
+    });
+  }
+
+  return accuracyData;
+}
+
+// Generate detailed admin report
+function generateAdminReport(room) {
+  const results = Array.from(room.players.values())
+    .map((player) => ({
+      id: player.id,
+      name: player.name,
+      score: player.score,
+      answers: player.answers,
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  return results.map((player) => ({
+    username: player.name,
+    score: player.score,
+    totalQuestions: room.quizData.length,
+    questions: room.quizData.map((q, index) => {
+      // ── Flexible correct answer lookup ──
+      const correctAnswer = q.choices?.correct || q.correctAnswer;
+      return {
+        questionNumber: index + 1,
+        question: q.question,
+        correctAnswer,
+        playerAnswer: player.answers[index] || "No answer",
+        isCorrect: player.answers[index] === correctAnswer,
+      };
+    }),
+  }));
 }
 
 function endQuiz(roomCode) {
@@ -64,24 +131,20 @@ function endQuiz(roomCode) {
   });
 
   // Send detailed report to admin only
-  const detailedReports = results.map((player) => ({
-    username: player.name,
-    score: player.score,
-    totalQuestions: room.quizData.length,
-    questions: room.quizData.map((q, index) => {
-      // ── Flexible correct answer lookup ──
-      const correctAnswer = q.choices?.correct || q.correctAnswer;
-      return {
-        questionNumber: index + 1,
-        question: q.question,
-        correctAnswer,
-        playerAnswer: player.answers[index] || "No answer",
-        isCorrect: player.answers[index] === correctAnswer,
-      };
-    }),
-  }));
-
+  const detailedReports = generateAdminReport(room);
   io.to(room.adminId).emit("adminReport", detailedReports);
+  const accuracyData = generateQuizAccuracy(room);
+  io.to(room.adminId).emit("quizAccuracy", accuracyData);
+
+  // ✅ Send individual reports to each player at quiz end
+  room.players.forEach((player, socketId) => {
+    const playerReport = detailedReports.find(
+      (report) => report.username === player.name,
+    );
+    if (playerReport) {
+      io.to(socketId).emit("playerReport", playerReport);
+    }
+  });
 
   console.log(`Quiz ended in room ${roomCode}`);
 }
@@ -148,12 +211,14 @@ io.on("connection", (socket) => {
 
     rooms.set(roomCode, {
       roomCode,
+      roomName: "", // Will be updated when quiz is configured
       quizData: null,
       players: new Map(),
       currentQuestion: 0,
       started: false,
       questionStartTime: null,
       adminId: socket.id,
+      isPublic: false, // Default to private
     });
 
     socket.join(roomCode);
@@ -161,6 +226,42 @@ io.on("connection", (socket) => {
 
     console.log(`Room created: ${roomCode}`);
     callback?.({ roomCode });
+  });
+
+  // ── Update room settings (public/private, name) ─────────────────────────
+  socket.on("update_room_settings", ({ roomCode, isPublic, roomName }) => {
+    const room = rooms.get(roomCode);
+    if (!room) return;
+    if (socket.id !== room.adminId) return; // Only admin can update
+
+    if (typeof isPublic === "boolean") {
+      room.isPublic = isPublic;
+    }
+    if (roomName !== undefined) {
+      room.roomName = roomName;
+    }
+
+    console.log(
+      `Room ${roomCode} updated: public=${room.isPublic}, name=${room.roomName}`,
+    );
+
+    // Broadcast updated public room list
+    io.emit("public_rooms_updated");
+  });
+
+  // ── Get public rooms list ────────────────────────────────────────────────
+  socket.on("get_public_rooms", (callback) => {
+    const publicRooms = Array.from(rooms.values())
+      .filter((room) => room.isPublic && !room.started)
+      .map((room) => ({
+        roomCode: room.roomCode,
+        roomName: room.roomName || "Unnamed Room",
+        playerCount: room.players.size,
+        hasQuiz: !!room.quizData,
+      }));
+
+    console.log(`📋 Sending ${publicRooms.length} public rooms to client`);
+    callback?.(publicRooms);
   });
 
   // ── Join an existing room ────────────────────────────────────────────────
@@ -274,7 +375,6 @@ io.on("connection", (socket) => {
     io.to(roomCode).emit("quizStarted", {
       totalQuestions: room.quizData.length,
     });
-    socket.emit("adminReport");
 
     sendQuestion(roomCode);
   });
@@ -324,6 +424,20 @@ io.on("connection", (socket) => {
         })),
       });
 
+      // ✅ Send updated admin report after each question
+      const detailedReports = generateAdminReport(room);
+      io.to(room.adminId).emit("adminReport", detailedReports);
+
+      // ✅ Send individual reports to each player
+      room.players.forEach((player, socketId) => {
+        const playerReport = detailedReports.find(
+          (report) => report.username === player.name,
+        );
+        if (playerReport) {
+          io.to(socketId).emit("playerReport", playerReport);
+        }
+      });
+
       room.currentQuestion += 1;
 
       setTimeout(() => sendQuestion(roomCode), 2000);
@@ -338,6 +452,19 @@ io.on("connection", (socket) => {
 
     endQuiz(roomCode);
     socket.emit("quizEnded", roomCode);
+  });
+
+  // ── Nuke - broadcast animation to all clients ───────────────────────────
+  socket.on("nuke", (password) => {
+    // Optional: Add password protection
+    const NUKE_PASSWORD = "BOOM"; // Change this to whatever you want
+
+    if (password === NUKE_PASSWORD) {
+      console.log("💥 NUKE ACTIVATED by", socket.id);
+      io.emit("triggerNuke"); // Broadcast to ALL connected clients
+    } else {
+      socket.emit("error", { message: "Invalid nuke password" });
+    }
   });
 
   // ── Disconnect ───────────────────────────────────────────────────────────
@@ -375,4 +502,97 @@ app.get("/", (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log("\n🎮 Server Commands:");
+  console.log("  nuke        - Trigger nuke animation on all clients");
+  console.log("  rooms       - List all active rooms");
+  console.log("  players     - Show all connected players");
+  console.log("  help        - Show this help message\n");
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TERMINAL COMMAND INTERFACE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  prompt: "> ",
+});
+
+rl.prompt();
+
+rl.on("line", (line) => {
+  const command = line.trim().toLowerCase();
+
+  switch (command) {
+    case "nuke":
+      console.log("💥 NUKE ACTIVATED FROM SERVER!");
+      io.emit("triggerNuke");
+      console.log("✅ Nuke broadcasted to all connected clients\n");
+      break;
+
+    case "rooms":
+      console.log("\n📋 Active Rooms:");
+      if (rooms.size === 0) {
+        console.log("  No active rooms\n");
+      } else {
+        rooms.forEach((room, code) => {
+          console.log(`  ${code} - ${room.roomName || "Unnamed"}`);
+          console.log(`    Players: ${room.players.size}`);
+          console.log(`    Started: ${room.started ? "Yes" : "No"}`);
+          console.log(`    Public: ${room.isPublic ? "Yes" : "No"}\n`);
+        });
+      }
+      break;
+
+    case "players":
+      console.log("\n👥 Connected Players:");
+      let totalPlayers = 0;
+      rooms.forEach((room, code) => {
+        if (room.players.size > 0) {
+          console.log(`  Room ${code}:`);
+          room.players.forEach((player) => {
+            console.log(`    - ${player.name} (${player.id})`);
+            totalPlayers++;
+          });
+        }
+      });
+      console.log(`\n  Total: ${totalPlayers} players\n`);
+      break;
+
+    case "help":
+      console.log("\n🎮 Available Commands:");
+      console.log("  nuke        - Trigger nuke animation on all clients");
+      console.log("  rooms       - List all active rooms");
+      console.log("  players     - Show all connected players");
+      console.log("  help        - Show this help message");
+      console.log("  clear       - Clear the console");
+      console.log("  exit/quit   - Shutdown the server\n");
+      break;
+
+    case "clear":
+      console.clear();
+      console.log("Server running on http://localhost:" + PORT + "\n");
+      break;
+
+    case "exit":
+    case "quit":
+      console.log("\n👋 Shutting down server...");
+      process.exit(0);
+      break;
+
+    case "":
+      // Just pressed enter, do nothing
+      break;
+
+    default:
+      console.log(`❌ Unknown command: "${command}"`);
+      console.log('Type "help" for available commands\n');
+      break;
+  }
+
+  rl.prompt();
+}).on("close", () => {
+  console.log("\n👋 Server terminated");
+  process.exit(0);
 });

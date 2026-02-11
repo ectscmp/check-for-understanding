@@ -13,7 +13,7 @@
         <h1>Admin Dashboard</h1>
       </div>
       <div class="top-bar-actions">
-        <a> <button id="backbtn">Join a Quiz</button></a>
+        <a href="index.html"> <button id="backbtn">Join a Quiz</button></a>
 
         <button id="themeToggle">🌙</button>
         <button id="Information">
@@ -41,19 +41,74 @@
         <h2>Admin Dashboard Info</h2>
         <h3>Instructions</h3>
         <ol>
-          <li>Create a Room (if there is no code it defualts to cmp)</li>
-          <li>Upload Quiz Json or create a quiz using the provided form</li>
+          <li>Create a Room (if there is no code it defaults to CMP)</li>
+          <li>
+            Choose if room should be Public (visible to others) or Private
+          </li>
+          <li>Upload Quiz JSON or create a quiz using the provided form</li>
           <li>Start Quiz</li>
         </ol>
-        <p>Students/Users report will show when user finishs quiz</p>
+        <p>Students/Users report will show when user finishes quiz</p>
       </div>
     </div>
     <main class="dashboard">
       <!-- CREATE ROOM -->
       <section class="card">
         <h3>Create Room</h3>
-        <input id="roomName" placeholder="Room Name (optional)" />
+        <input id="roomName" placeholder="Room Name (e.g., 'Math Quiz 101')" />
         <input id="roomInput" placeholder="Room code " />
+
+        <div style="margin: 15px 0">
+          <label style="display: block; margin-bottom: 10px; font-weight: bold"
+            >Room Visibility:</label
+          >
+          <div style="display: flex; gap: 20px; margin-left: 10px">
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+              "
+            >
+              <input
+                type="radio"
+                name="roomVisibility"
+                value="private"
+                checked
+                id="privateRadio"
+              />
+              <span>🔒 Private</span>
+            </label>
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+              "
+            >
+              <input
+                type="radio"
+                name="roomVisibility"
+                value="public"
+                id="publicRadio"
+              />
+              <span>🌐 Public</span>
+            </label>
+          </div>
+          <p
+            style="
+              font-size: 12px;
+              color: #94a3b8;
+              margin-top: 8px;
+              margin-left: 10px;
+            "
+          >
+            Public rooms appear in the room list for others to join
+          </p>
+        </div>
+
         <button id="createRoomBtn">Create Room</button>
         <p id="roomCodeDisplay"></p>
         <div id="error" class="error hidden"></div>
@@ -66,7 +121,7 @@
       </section>
 
       <!-- CREATE QUIZ -->
-      <section class="card" id="create">
+      <section class="card hidden" id="create">
         <h3>Create A Quiz</h3>
 
         <div id="quizInputs"></div>
@@ -81,7 +136,7 @@
       <button id="unhide" class="hidden">Show Form</button>
 
       <!-- UPLOAD QUIZ JSON -->
-      <section class="card">
+      <section class="card hidden" id="json">
         <h3>Upload Quiz JSON</h3>
         <input type="file" id="fileInput" accept=".json" />
         <h3>Uploaded JSON</h3>
@@ -99,33 +154,36 @@
         "wrong2": "Wrong answer text",
         "wrong3": "Wrong answer text"
       }
-    },
-    {
-      "id": 2,
-      "question": "Question text goes here",
-      "choices": {
-        "correct": "Correct answer text",
-        "wrong1": "Wrong answer text",
-        "wrong2": "Wrong answer text",
-        "wrong3": "Wrong answer text"
-      }
-    },
-    {
-      "id": 3,
-      "question": "Question text goes here",
-      "choices": {
-        "correct": "Correct answer text",
-        "wrong1": "Wrong answer text",
-        "wrong2": "Wrong answer text",
-        "wrong3": "Wrong answer text"
-      }
     }
   ]
 }
 </pre
         >
+        <div class="paste-json-section">
+          <h3>Or Paste JSON Directly</h3>
+          <textarea
+            id="jsonTextarea"
+            placeholder="Paste your quiz JSON here"
+            rows="10"
+            style="
+              width: 95%;
+              font-family: monospace;
+              padding: 10px;
+              border: 1px solid #ccc;
+              border-radius: 4px;
+            "
+          ></textarea>
+          <button id="loadJsonBtn" style="margin-top: 10px">
+            Load Quiz from Pasted JSON
+          </button>
+          <div id="pasteOutput" style="margin-top: 10px; color: green"></div>
+        </div>
       </section>
     </main>
+    <div id="chart">
+      <canvas id="accuracyChart"></canvas>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </div>
     <div id="adminReportContainer"></div>
 
     <script src="/socket.io/socket.io.js"></script>
