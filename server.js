@@ -590,9 +590,4 @@ rl.on("line", (line) => {
       console.log('Type "help" for available commands\n');
       break;
   }
-
-  rl.prompt();
-}).on("close", () => {
-  console.log("\n👋 Server terminated");
-  process.exit(0);
 });
