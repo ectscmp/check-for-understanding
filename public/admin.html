@@ -5,6 +5,68 @@
     <title>Admin Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="./css/style.css" />
+    <style>
+      /* ── Share link box ── */
+      .share-box {
+        display: none;
+        margin-top: 12px;
+        background: rgba(124, 106, 247, 0.08);
+        border: 1px solid rgba(124, 106, 247, 0.3);
+        border-radius: 10px;
+        padding: 12px 14px;
+        gap: 8px;
+        flex-direction: column;
+      }
+      .share-box.visible {
+        display: flex;
+      }
+      .share-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #7c6af7;
+        margin-bottom: 2px;
+      }
+      .share-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .share-url {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        font-family: monospace;
+        font-size: 0.88rem;
+        color: inherit;
+        cursor: text;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .copy-btn {
+        flex-shrink: 0;
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(124, 106, 247, 0.4);
+        background: transparent;
+        color: #7c6af7;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+        width: auto;
+      }
+      .copy-btn:hover {
+        background: rgba(124, 106, 247, 0.12);
+      }
+      .copy-btn.copied {
+        color: #4ade80;
+        border-color: rgba(74, 222, 128, 0.4);
+      }
+    </style>
   </head>
 
   <body>
@@ -13,8 +75,7 @@
         <h1>Admin Dashboard</h1>
       </div>
       <div class="top-bar-actions">
-        <a href="index.html"> <button id="backbtn">Join a Quiz</button></a>
-
+        <a href="index.html"><button id="backbtn">Join a Quiz</button></a>
         <button id="themeToggle">🌙</button>
         <button id="Information">
           <svg
@@ -22,7 +83,6 @@
             width="16"
             height="16"
             fill="currentColor"
-            class="bi bi-info-circle"
             viewBox="0 0 16 16"
           >
             <path
@@ -35,6 +95,7 @@
         </button>
       </div>
     </header>
+
     <div id="infoModal" class="modal hidden">
       <div class="modal-content">
         <button class="modal-close" id="closeInfoModal">&times;</button>
@@ -45,18 +106,20 @@
           <li>
             Choose if room should be Public (visible to others) or Private
           </li>
+          <li>Share the generated link with students — they join directly</li>
           <li>Upload Quiz JSON or create a quiz using the provided form</li>
           <li>Start Quiz</li>
         </ol>
-        <p>Students/Users report will show when user finishes quiz</p>
+        <p>Students' reports will appear when users finish the quiz.</p>
       </div>
     </div>
+
     <main class="dashboard">
       <!-- CREATE ROOM -->
       <section class="card">
         <h3>Create Room</h3>
         <input id="roomName" placeholder="Room Name (e.g., 'Math Quiz 101')" />
-        <input id="roomInput" placeholder="Room code " />
+        <input id="roomInput" placeholder="Room code (leave blank for auto)" />
 
         <div style="margin: 15px 0">
           <label style="display: block; margin-bottom: 10px; font-weight: bold"
@@ -111,11 +174,23 @@
 
         <button id="createRoomBtn">Create Room</button>
         <p id="roomCodeDisplay"></p>
+
+        <!-- ── Shareable link (shown after room creation) ── -->
+        <div class="share-box" id="shareBox">
+          <span class="share-label">🔗 Share this link with students</span>
+          <div class="share-row">
+            <input class="share-url" id="shareUrl" type="text" readonly />
+            <button class="copy-btn" id="copyLinkBtn">Copy</button>
+          </div>
+        </div>
+
         <div id="error" class="error hidden"></div>
+
         <h3>Start Quiz</h3>
         <button id="startQuizBtn">Start Quiz</button>
         <button id="endQuizBtn">End Quiz</button>
         <button id="downloadReportBtn">Download Report</button>
+
         <h1>Name List</h1>
         <p id="namelist"></p>
       </section>
@@ -123,13 +198,10 @@
       <!-- CREATE QUIZ -->
       <section class="card hidden" id="create">
         <h3>Create A Quiz</h3>
-
         <div id="quizInputs"></div>
-
         <button id="addQuestionBtn">➕ Add Question</button>
         <button id="createQuizBtn">Create Quiz</button>
         <button id="Hide">Hide Form</button>
-
         <pre class="hidden" id="written"></pre>
       </section>
 
@@ -156,8 +228,7 @@
       }
     }
   ]
-}
-</pre
+}</pre
         >
         <div class="paste-json-section">
           <h3>Or Paste JSON Directly</h3>
@@ -180,6 +251,7 @@
         </div>
       </section>
     </main>
+
     <div id="chart">
       <canvas id="accuracyChart"></canvas>
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -188,6 +260,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/admin.js"></script>
+
     <footer class="footer">
       <div class="footer-content">
         <p>Developed by Coby Hughes</p>

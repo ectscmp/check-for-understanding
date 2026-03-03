@@ -11,7 +11,19 @@ const statusEl = document.getElementById("status");
 let currentRoom = null;
 let hasAnswered = false;
 let playerReportData = null;
+// Detect /join/ROOMCODE in URL
+const urlParts = window.location.pathname.split("/");
+const URL_ROOM_CODE =
+  urlParts[1] === "join" && urlParts[2]
+    ? urlParts[2].trim().toUpperCase()
+    : null;
 
+if (URL_ROOM_CODE) {
+  roomInput.value = URL_ROOM_CODE;
+  roomInput.classList.add("hidden");
+  document.getElementById("username").placeholder =
+    `Enter your name to join ${URL_ROOM_CODE}`;
+}
 /* =====================
    THEME TOGGLE
 ===================== */
@@ -251,7 +263,7 @@ function joinRoom(roomCode, username) {
 }
 
 joinBtn.addEventListener("click", () => {
-  const roomCode = roomInput.value.trim();
+  const roomCode = URL_ROOM_CODE || roomInput.value.trim();
   const username = document.getElementById("username").value.trim();
   joinRoom(roomCode, username);
 });
@@ -512,7 +524,30 @@ socket.on("quizResults", ({ finalScores }) => {
 /* =====================
    ERRORS
 ===================== */
+// ── Auto-join from /join/ROOMCODE ──
+if (urlParts[1] === "join" && urlParts[2]) {
+  const urlRoomCode = urlParts[2].trim().toUpperCase();
 
+  // Hide room code input, pre-fill it
+  roomInput.value = urlRoomCode;
+  roomInput.classList.add("hidden");
+  document.getElementById("username").placeholder =
+    `Enter your name to join ${urlRoomCode}`;
+
+  // Remove the existing joinBtn listener by cloning it
+  const oldBtn = joinBtn;
+  const newBtn = oldBtn.cloneNode(true);
+  oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+
+  newBtn.addEventListener("click", () => {
+    const username = document.getElementById("username").value.trim();
+    if (!username) {
+      alert("Please enter your name");
+      return;
+    }
+    joinRoom(urlRoomCode, username);
+  });
+}
 socket.on("error", (err) => {
   alert(err.message || "An error occurred");
 });
