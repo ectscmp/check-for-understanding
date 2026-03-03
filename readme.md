@@ -16,9 +16,8 @@ Done:
 - Hide Join section after joining.
 - fix constant sending of player list to end on start of quiz
   Player reports update after each question
-
-TO-DO
-N/A
+- share urls
+  TO-DO
+  Persistent rooms (requires set login to create)
 
 Future Ideas
-Quiz Chat Rooms with admin ability to delete
