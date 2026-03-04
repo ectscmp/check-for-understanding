@@ -963,7 +963,9 @@ app.get("/halliday", (req, res) => {
 app.get("/join/:roomcode", (req, res) => {
   res.sendFile(join(__dirname, "public", "index.html"));
 });
-
+app.get("/create", (req, res) => {
+  res.sendFile(join(__dirname, "public", "admin.html"));
+});
 // ═══════════════════════════════════════════════════════════════════════════
 // SERVER START
 // ═══════════════════════════════════════════════════════════════════════════
