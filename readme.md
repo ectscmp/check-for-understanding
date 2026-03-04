@@ -17,10 +17,11 @@ Done:
 - fix constant sending of player list to end on start of quiz
   Player reports update after each question
 - share urls
-  TO-DO
-  create rooms with url
-  pass in json with url
+  - admin kick
+  - create rooms with url
+  - pass in json with url
+    TO-DO
+
   possibly persistent rooms
-  admin kick
 
 Future Ideas
