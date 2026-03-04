@@ -236,6 +236,7 @@ body.light pre {
 }
 
 .modal-content {
+  display: flex;
   background: #020617;
   color: #e5e7eb;
   padding: 20px;
