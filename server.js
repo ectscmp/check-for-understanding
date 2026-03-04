@@ -956,7 +956,15 @@ io.on("connection", (socket) => {
 app.get("/", (req, res) => {
   res.sendFile(join(__dirname, "public", "index.html"));
 });
-
+app.get("/index", (req, res) => {
+  res.sendFile(join(__dirname, "public", "index.html"));
+});
+app.get("/join", (req, res) => {
+  res.sendFile(join(__dirname, "public", "index.html"));
+});
+app.get("/admin", (req, res) => {
+  res.sendFile(join(__dirname, "public", "admin.html"));
+});
 app.get("/halliday", (req, res) => {
   res.sendFile(join(__dirname, "public", "halliday.html"));
 });

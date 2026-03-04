@@ -240,7 +240,7 @@ document.head.appendChild(nukeStyles);
    NAVIGATION
 ===================== */
 adminbtn.addEventListener("click", () => {
-  window.location.href = "admin.html";
+  window.location.href = "/admin";
 });
 
 /* =====================

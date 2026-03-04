@@ -23,6 +23,7 @@ window.lastQuizData = null;
 ===================== */
 function showShareLink(roomCode) {
   const url = `${window.location.origin}/join/${roomCode}`;
+  roomCode.split(" ", "%20");
   shareUrlEl.value = url;
   shareBox.classList.add("visible");
 }
