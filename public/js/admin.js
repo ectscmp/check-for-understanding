@@ -92,7 +92,27 @@ let currentRoom = null;
 window.lastQuizData = null;
 
 function update_namelist() {
-  document.getElementById("namelist").innerText = names.join("\n");
+  const container = document.getElementById("namelist");
+  container.innerHTML = "";
+
+  names.forEach((user) => {
+    console.log(user);
+    console.log(user.socketId);
+    const row = document.createElement("div");
+
+    const nameSpan = document.createElement("span");
+    nameSpan.innerText = user.name;
+
+    const kickBtn = document.createElement("button");
+    kickBtn.innerText = "Kick";
+    kickBtn.addEventListener("click", () => {
+      socket.emit("kick_user", user.id);
+    });
+
+    row.appendChild(nameSpan);
+    row.appendChild(kickBtn);
+    container.appendChild(row);
+  });
 }
 
 /* =====================
@@ -115,7 +135,8 @@ createRoomBtn.addEventListener("click", () => {
     document.getElementById("create").classList.remove("hidden");
 
     currentRoom = response.roomCode;
-    roomCodeDisplay.textContent = `Room Code: ${response.roomCode}`;
+    document.querySelector(".hideoncreate").style.display = "none";
+    roomCodeDisplay.innerHTML = `<h2>Room Code: ${response.roomCode}</h2>`;
 
     // ── Show shareable link ──
     showShareLink(response.roomCode);
@@ -472,12 +493,12 @@ document.getElementById("downloadReportBtn").addEventListener("click", () => {
    PLAYER LIST
 ===================== */
 socket.on("player_list", ({ players }) => {
-  names = players.map((p) => p.name);
+  names = players;
   update_namelist();
 });
 
 socket.on("player_joined", ({ players }) => {
-  names = players.map((p) => p.name);
+  names = players;
   update_namelist();
 });
 

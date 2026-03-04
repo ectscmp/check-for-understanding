@@ -551,3 +551,10 @@ if (urlParts[1] === "join" && urlParts[2]) {
 socket.on("error", (err) => {
   alert(err.message || "An error occurred");
 });
+
+socket.on("kicked", () => {
+  console.log("kicked");
+  alert("You were kicked from the room.");
+
+  window.location.href = "/";
+});

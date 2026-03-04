@@ -794,7 +794,14 @@ io.on("connection", (socket) => {
       });
     }
   });
-
+  socket.on("kick_user", (id) => {
+    const target = io.sockets.sockets.get(id);
+    console.log(id);
+    if (target) {
+      target.emit("kicked");
+      target.disconnect(true);
+    }
+  });
   // ── Start quiz ──
   socket.on("start_quiz", (roomCode) => {
     console.log("start_quiz received with:", roomCode);
@@ -1041,8 +1048,6 @@ rl.on("line", (line) => {
     case "quit":
       console.log("\n👋 Shutting down server...");
       process.exit(0);
-      break;
-
     case "":
       break;
 

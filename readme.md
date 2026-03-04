@@ -18,6 +18,9 @@ Done:
   Player reports update after each question
 - share urls
   TO-DO
-  Persistent rooms (requires set login to create)
+  create rooms with url
+  pass in json with url
+  possibly persistent rooms
+  admin kick
 
 Future Ideas
