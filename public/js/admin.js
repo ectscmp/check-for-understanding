@@ -1,7 +1,9 @@
 let names = [];
 const socket = io();
 let lastReportData = [];
-
+console.log("Information button:", document.getElementById("Information"));
+console.log("Modal:", document.getElementById("infoModal"));
+console.log("Close button:", document.getElementById("closeInfoModal"));
 /* =====================
    ELEMENT REFS
 ===================== */
@@ -334,24 +336,28 @@ document.getElementById("unhide").addEventListener("click", () => {
 /* =====================
    INFO MODAL
 ===================== */
-const infoModal = document.getElementById("infoModal");
+document.addEventListener("DOMContentLoaded", () => {
+  const infoModal = document.getElementById("infoModal");
 
-document.getElementById("Information").addEventListener("click", () => {
-  infoModal.classList.remove("hidden");
-});
-document.getElementById("closeInfoModal").addEventListener("click", () => {
-  infoModal.classList.add("hidden");
-  setCookie("info-seen", "true");
-});
-infoModal.addEventListener("click", (e) => {
-  if (e.target === infoModal) {
+  document.getElementById("Information").addEventListener("click", () => {
+    infoModal.classList.remove("hidden");
+  });
+
+  document.getElementById("closeInfoModal").addEventListener("click", () => {
     infoModal.classList.add("hidden");
     setCookie("info-seen", "true");
-  }
-});
+  });
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (getCookie("info-seen") !== "true") infoModal.classList.remove("hidden");
+  infoModal.addEventListener("click", (e) => {
+    if (e.target === infoModal) {
+      infoModal.classList.add("hidden");
+      setCookie("info-seen", "true");
+    }
+  });
+
+  if (getCookie("info-seen") !== "true") {
+    infoModal.classList.remove("hidden");
+  }
 });
 
 /* =====================

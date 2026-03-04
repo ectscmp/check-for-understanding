@@ -65,6 +65,42 @@
       .copy-btn.copied {
         color: #4ade80;
         border-color: rgba(74, 222, 128, 0.4);
+      } /* ── Modal ── */
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .modal.hidden {
+        display: none;
+      }
+      .modal-content {
+        background: #ffffff;
+        color: #020617;
+        padding: 25px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .modal-close {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        font-size: 24px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        color: inherit;
+      }
+      body.dark .modal-content {
+        background: #020617;
+        color: #e5e7eb;
       }
     </style>
   </head>
@@ -75,7 +111,7 @@
         <h1>Admin Dashboard</h1>
       </div>
       <div class="top-bar-actions">
-        <a href="/index"><button id="backbtn">Join a Quiz</button></a>
+        <a href="/join"><button id="backbtn">Join a Quiz</button></a>
         <button id="themeToggle">🌙</button>
         <button id="Information">
           <svg
@@ -268,7 +304,7 @@
     <div id="adminReportContainer"></div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="js/admin.js"></script>
+    <script src="js/admin.js" defer></script>
 
     <footer class="footer">
       <div class="footer-content">
