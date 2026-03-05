@@ -142,10 +142,24 @@ function createRoom(customCode, roomName, isPublic, quizData) {
 
     currentRoom = response.roomCode;
     roomCodeDisplay.textContent = `Room Code: ${response.roomCode}`;
+    const ids = [
+      "json",
+      "create",
+      "downloadReportBtn",
+      "playerList",
+      "playerListContainer",
+      "startHeader",
+    ];
+    ids.forEach((id) => {
+      document.getElementById(id)?.classList.remove("hidden");
+    });
 
-    document.getElementById("json").classList.remove("hidden");
-    document.getElementById("create").classList.remove("hidden");
+    startQuizBtn?.classList.remove("hidden");
+    endQuizBtn?.classList.remove("hidden");
 
+    document.querySelectorAll(".hideoncreate").forEach((el) => {
+      el.classList.add("hidden");
+    });
     showShareLink(response.roomCode);
 
     socket.emit("update_room_settings", {

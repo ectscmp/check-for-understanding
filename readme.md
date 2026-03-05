@@ -22,6 +22,5 @@ Done:
 - pass in json with url
   TO-DO
 
-  possibly persistent rooms
-
-Future Ideas
+  persistent rooms
+  quiz that starts at different points and allows users to join while its running
