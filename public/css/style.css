@@ -224,38 +224,37 @@ body.light pre {
   display: flex;
   gap: 10px;
 }
-.modal {
-  display: flex;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
 
+.modal.hidden {
+  display: none;
+}
 .modal-content {
-  display: flex;
-  background: #020617;
-  color: #e5e7eb;
-  padding: 20px;
-  border-radius: 8px;
+  background: #ffffff;
+  color: #020617;
+  padding: 25px 35px;
+  border-radius: 12px;
   width: 90%;
-  max-width: 400px;
+  max-width: 400px; /* wider to accommodate horizontal layout */
   position: relative;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
-
 .modal-close {
   position: absolute;
   top: 10px;
-  right: 10px;
-  background: none;
-  color: inherit;
+  right: 12px;
   font-size: 24px;
-  border: none;
   cursor: pointer;
+  background: none;
+  border: none;
+  color: inherit;
+}
+body.dark .modal-content {
+  background: #020617;
+  color: #e5e7eb;
 }
 
 body.light .modal-content {
