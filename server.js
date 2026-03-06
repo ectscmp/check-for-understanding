@@ -54,24 +54,6 @@ import { parse } from "querystring";
 
 dotenv.config();
 
-app.post("/api/login", async (req, res) => {
-  const { username, password } = req.body;
-
-  if (username !== process.env.ADMIN_USERNAME) {
-    return res.json({ success: false });
-  }
-
-  const isMatch = await bcrypt.compare(
-    password,
-    process.env.ADMIN_PASSWORD_HASH,
-  );
-
-  if (!isMatch) {
-    return res.json({ success: false });
-  }
-
-  res.json({ success: true });
-});
 // Generate random room code
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -1066,6 +1048,5 @@ rl.on("line", (line) => {
       console.log('Type "help" for available commands\n');
       break;
   }
-
   rl.prompt();
 });
