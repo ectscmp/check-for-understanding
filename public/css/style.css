@@ -941,3 +941,8 @@ body.dark-mode {
   margin-top: 10px;
   font-size: 14px;
 }
+.player-item {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  font-size: 15px;
+}

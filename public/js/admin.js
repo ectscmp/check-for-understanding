@@ -123,8 +123,15 @@ function addQuestion() {
 addQuestion();
 addQuestionBtn?.addEventListener("click", addQuestion);
 
+/* =====================
+   UPDATE NAME LIST  ← FIXED
+===================== */
 function update_namelist() {
-  document.getElementById("namelist").innerText = names.join("\n");
+  const el = document.getElementById("namelist");
+  if (!el) return;
+  el.innerHTML = names.length
+    ? names.map((n) => `👤 ${n}`).join("<br>")
+    : "<span style='color:#94a3b8'>No players yet...</span>";
 }
 
 /* =====================
@@ -142,12 +149,14 @@ function createRoom(customCode, roomName, isPublic, quizData) {
 
     currentRoom = response.roomCode;
     roomCodeDisplay.textContent = `Room Code: ${response.roomCode}`;
+
+    // ← FIXED: use the IDs that actually exist in admin.html
     const ids = [
       "json",
       "create",
       "downloadReportBtn",
-      "playerList",
-      "playerListContainer",
+      "nameListContainer",
+      "namelist",
       "startHeader",
     ];
     ids.forEach((id) => {

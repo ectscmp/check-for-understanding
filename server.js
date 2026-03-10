@@ -922,7 +922,9 @@ io.on("connection", (socket) => {
           playerCount: room.players.size,
         });
 
-        if (room.players.size === 0) {
+        // ← FIXED: only delete if admin is also gone
+        const adminStillConnected = io.sockets.sockets.has(room.adminId);
+        if (room.players.size === 0 && !adminStillConnected) {
           rooms.delete(roomCode);
           console.log(`Room ${roomCode} deleted (empty)`);
         }

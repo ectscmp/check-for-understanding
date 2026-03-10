@@ -122,14 +122,7 @@ Given this quiz JSON:
 URL-encode it and append it to the `/create` route:
 
 ```
-http://localhost:3000/create?code=MATH1&name=Math+Quiz&quiz=%7B%22quiz%22%3A%5B%7B%22id%22%3A1%2C%22question%22%3A%22What+is+1%2B1%3F%22%2C%22choices%22%3A%7B%22correct%22%3A%222%22%2C%22wrong1%22%3A%221%22%2C%22wrong2%22%3A%223%22%7D%7D%5D%7D
-```
-
-You can URL-encode JSON using any online tool or with JavaScript:
-
-```javascript
-const encoded = encodeURIComponent(JSON.stringify(quizData));
-const url = `http://localhost:3000/create?code=MATH1&name=My+Quiz&quiz=${encoded}`;
+http://localhost:3000/create?code=MATH1&name=Math+Quiz&quiz={ "quiz": [ { "id": 1, "question": "What is 1+1?", "choices": { "correct": "2", "wrong1": "1", "wrong2": "3" } } ] }
 ```
 
 When you open that URL in the admin browser, the room is created and the quiz is loaded automatically — just click **Start Quiz**.
