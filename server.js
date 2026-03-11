@@ -48,9 +48,7 @@ const serverConfig = {
 //   isPublic: boolean,
 //   adminId: string
 // }
-import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import { parse } from "querystring";
 
 dotenv.config();
 
@@ -623,7 +621,18 @@ io.on("connection", (socket) => {
 
   // Track connection time for user management
   socket.connectedAt = Date.now();
+  socket.on("close_room", (roomCode) => {
+    const room = rooms.get(roomCode);
+    if (!room) return;
+    if (socket.id !== room.adminId) return;
 
+    io.to(roomCode).emit("roomClosed", {
+      message: "The quiz has ended. Thanks for playing!",
+    });
+
+    rooms.delete(roomCode);
+    console.log(`Room ${roomCode} closed by admin`);
+  });
   // ── Get current player list ──
   socket.on("get_players", (roomCode) => {
     const room = rooms.get(roomCode);
@@ -704,27 +713,16 @@ io.on("connection", (socket) => {
   socket.on("join_room", ({ roomCode, username }) => {
     const room = rooms.get(roomCode);
 
-    console.log("👤 JOIN:", {
-      roomCode,
-      username,
-      adminId: room?.adminId,
-      socketId: socket.id,
-    });
-
     if (!room) {
       socket.emit("error", { message: "Room not found" });
       return;
     }
 
-    if (room.started) {
-      socket.emit("error", { message: "Quiz already started" });
-      return;
-    }
+    // ← REMOVED the room.started early return
 
     socket.join(roomCode);
     socket.roomCode = roomCode;
 
-    // Don't add admin as a player
     if (socket.id !== room.adminId) {
       const nameTaken = Array.from(room.players.values()).some(
         (p) => p.name.toLowerCase() === (username || "").toLowerCase(),
@@ -750,6 +748,28 @@ io.on("connection", (socket) => {
       playerCount: room.players.size,
       players: Array.from(room.players.values()),
     });
+
+    // ← NEW: if quiz is already running, send the current question to the new joiner
+    if (room.started && room.quizData) {
+      const questionData = room.quizData[room.currentQuestion];
+      if (questionData) {
+        let options = [];
+        if (questionData.choices) {
+          const { correct, ...wrongs } = questionData.choices;
+          options = [correct, ...Object.values(wrongs).filter(Boolean)];
+        } else if (questionData.options) {
+          options = questionData.options;
+        }
+        options = options.sort(() => Math.random() - 0.5);
+
+        socket.emit("quizStarted", { totalQuestions: room.quizData.length });
+        socket.emit("question", {
+          question: questionData.question,
+          options,
+          questionNumber: room.currentQuestion + 1,
+        });
+      }
+    }
   });
 
   // ── Upload quiz data ──

@@ -376,15 +376,62 @@ startQuizBtn.addEventListener("click", () => {
     quizData: window.lastQuizData,
   });
   socket.emit("start_quiz", currentRoom);
+  document.querySelectorAll(".hideonstart").forEach((el) => {
+    el.classList.add("hidden");
+  });
 });
 
 endQuizBtn.addEventListener("click", () => {
   try {
     socket.emit("endquiz", currentRoom);
-    roomCodeDisplay.textContent = "Ending Quiz…";
-    setTimeout(() => {
-      roomCodeDisplay.textContent = "";
-    }, 1000);
+    socket.emit("close_room", currentRoom);
+
+    // Reset state
+    currentRoom = null;
+    window.lastQuizData = null;
+    names = [];
+
+    // Reset room code display
+    roomCodeDisplay.textContent = "";
+
+    // Hide post-create elements
+    const ids = [
+      "json",
+      "create",
+      "downloadReportBtn",
+      "nameListContainer",
+      "namelist",
+      "startHeader",
+      "adminReportContainer",
+    ];
+    ids.forEach((id) => {
+      document.getElementById(id)?.classList.add("hidden");
+    });
+
+    startQuizBtn?.classList.add("hidden");
+    endQuizBtn?.classList.add("hidden");
+    document.getElementById("unhide")?.classList.add("hidden");
+    document.getElementById("chart")?.classList.add("hidden");
+
+    // Hide share box
+    shareBox.classList.remove("visible");
+    shareUrlEl.value = "";
+
+    // Clear name list
+    update_namelist();
+
+    // Clear report
+    const reportContainer = document.getElementById("adminReportContainer");
+    if (reportContainer) reportContainer.innerHTML = "";
+
+    // Show create room form again
+    document.querySelectorAll(".hideoncreate").forEach((el) => {
+      el.classList.remove("hidden");
+    });
+
+    // Clear room inputs
+    document.getElementById("roomInput").value = "";
+    document.getElementById("roomName").value = "";
   } catch {
     alert("Not in a room");
   }

@@ -372,7 +372,10 @@ socket.on("room_joined", (roomCode) => {
     element.classList.add("hidden");
   });
 });
-
+socket.on("roomClosed", ({ message }) => {
+  alert(message);
+  window.location.href = "/";
+});
 /* =====================
    QUIZ FLOW
 ===================== */
