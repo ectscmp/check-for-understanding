@@ -4,6 +4,7 @@ let lastReportData = [];
 console.log("Information button:", document.getElementById("Information"));
 console.log("Modal:", document.getElementById("infoModal"));
 console.log("Close button:", document.getElementById("closeInfoModal"));
+
 /* =====================
    ELEMENT REFS
 ===================== */
@@ -19,6 +20,7 @@ const copyLinkBtn = document.getElementById("copyLinkBtn");
 
 let currentRoom = null;
 window.lastQuizData = null;
+
 /* =====================
    JOIN TOAST
 ===================== */
@@ -35,12 +37,12 @@ function showJoinToast(name) {
   toast.textContent = `✅ ${name} has joined!`;
   toast.classList.add("visible");
 
-  // Clear any existing timer so only 1 shows at a time
   if (toastTimeout) clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => {
     toast.classList.remove("visible");
   }, 3000);
 }
+
 const toastStyles = document.createElement("style");
 toastStyles.textContent = `
   #joinToast {
@@ -66,6 +68,7 @@ toastStyles.textContent = `
   }
 `;
 document.head.appendChild(toastStyles);
+
 /* =====================
    SHARE LINK
 ===================== */
@@ -170,7 +173,7 @@ addQuestion();
 addQuestionBtn?.addEventListener("click", addQuestion);
 
 /* =====================
-   UPDATE NAME LIST  ← FIXED
+   UPDATE NAME LIST
 ===================== */
 function update_namelist() {
   const el = document.getElementById("namelist");
@@ -181,8 +184,102 @@ function update_namelist() {
 }
 
 /* =====================
+   QUIZ-RUNNING VISUAL STATE
+===================== */
+function enterQuizRunningMode() {
+  // Show the running banner
+  const banner = document.getElementById("quizRunningBanner");
+  if (banner) banner.classList.remove("hidden");
+
+  // Hide quiz builder/JSON uploader
+  const builderSection = document.getElementById("create");
+  if (builderSection) builderSection.classList.add("hidden");
+
+  // Show restore toggle button
+  const restoreBtn = document.getElementById("restoreBuilderBtn");
+  if (restoreBtn) {
+    restoreBtn.classList.remove("hidden");
+    restoreBtn.textContent = "Show Quiz Builder";
+  }
+}
+
+function exitQuizRunningMode() {
+  // Hide running banner
+  const banner = document.getElementById("quizRunningBanner");
+  if (banner) banner.classList.add("hidden");
+
+  // Show builder again
+  const builderSection = document.getElementById("create");
+  if (builderSection) builderSection.classList.remove("hidden");
+
+  // Hide restore button
+  const restoreBtn = document.getElementById("restoreBuilderBtn");
+  if (restoreBtn) restoreBtn.classList.add("hidden");
+}
+
+// Inject quiz-running styles
+const quizRunningStyles = document.createElement("style");
+quizRunningStyles.textContent = `
+  /* ── Quiz Running Banner ── */
+  #quizRunningBanner:not(.hidden) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    animation: bannerPulse 2s ease-in-out infinite;
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.35);
+  }
+
+  #quizRunningBanner .banner-dot {
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    animation: dot-blink 1s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  #quizRunningBanner .banner-question-counter {
+    margin-left: auto;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    font-weight: 600;
+  }
+
+  @keyframes bannerPulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(34, 197, 94, 0.35); }
+    50% { box-shadow: 0 4px 28px rgba(34, 197, 94, 0.6); }
+  }
+
+  @keyframes dot-blink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* ── Restore builder button ── */
+  #restoreBuilderBtn {
+    background: transparent;
+    border: 1.5px dashed currentColor;
+    opacity: 0.7;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: opacity 0.2s;
+  }
+  #restoreBuilderBtn:hover { opacity: 1; }
+`;
+document.head.appendChild(quizRunningStyles);
+
+/* =====================
    CORE CREATE ROOM
-   Shared by manual button + URL auto-create
 ===================== */
 function createRoom(customCode, roomName, isPublic, quizData) {
   const code = (customCode || "CMP").trim().toUpperCase();
@@ -196,7 +293,6 @@ function createRoom(customCode, roomName, isPublic, quizData) {
     currentRoom = response.roomCode;
     roomCodeDisplay.textContent = `Room Code: ${response.roomCode}`;
 
-    // ← FIXED: use the IDs that actually exist in admin.html
     const ids = [
       "json",
       "create",
@@ -215,6 +311,7 @@ function createRoom(customCode, roomName, isPublic, quizData) {
     document.querySelectorAll(".hideoncreate").forEach((el) => {
       el.classList.add("hidden");
     });
+
     showShareLink(response.roomCode);
 
     socket.emit("update_room_settings", {
@@ -360,7 +457,7 @@ document.getElementById("loadJsonBtn").addEventListener("click", () => {
 });
 
 /* =====================
-   START / END QUIZ
+   START QUIZ
 ===================== */
 startQuizBtn.addEventListener("click", () => {
   if (!currentRoom) {
@@ -376,25 +473,30 @@ startQuizBtn.addEventListener("click", () => {
     quizData: window.lastQuizData,
   });
   socket.emit("start_quiz", currentRoom);
+
   document.querySelectorAll(".hideonstart").forEach((el) => {
     el.classList.add("hidden");
   });
+
+  enterQuizRunningMode();
 });
 
+/* =====================
+   END QUIZ
+===================== */
 endQuizBtn.addEventListener("click", () => {
   try {
+    exitQuizRunningMode();
+
     socket.emit("endquiz", currentRoom);
     socket.emit("close_room", currentRoom);
 
-    // Reset state
     currentRoom = null;
     window.lastQuizData = null;
     names = [];
 
-    // Reset room code display
     roomCodeDisplay.textContent = "";
 
-    // Hide post-create elements
     const ids = [
       "json",
       "create",
@@ -413,23 +515,18 @@ endQuizBtn.addEventListener("click", () => {
     document.getElementById("unhide")?.classList.add("hidden");
     document.getElementById("chart")?.classList.add("hidden");
 
-    // Hide share box
     shareBox.classList.remove("visible");
     shareUrlEl.value = "";
 
-    // Clear name list
     update_namelist();
 
-    // Clear report
     const reportContainer = document.getElementById("adminReportContainer");
     if (reportContainer) reportContainer.innerHTML = "";
 
-    // Show create room form again
     document.querySelectorAll(".hideoncreate").forEach((el) => {
       el.classList.remove("hidden");
     });
 
-    // Clear room inputs
     document.getElementById("roomInput").value = "";
     document.getElementById("roomName").value = "";
   } catch {
@@ -473,6 +570,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (getCookie("info-seen") !== "true") {
     infoModal.classList.remove("hidden");
+  }
+
+  // ── Restore builder toggle ──
+  const restoreBtn = document.getElementById("restoreBuilderBtn");
+  if (restoreBtn) {
+    restoreBtn.addEventListener("click", () => {
+      const builderSection = document.getElementById("create");
+      if (builderSection) {
+        const isHidden = builderSection.classList.contains("hidden");
+        builderSection.classList.toggle("hidden");
+        restoreBtn.textContent = isHidden
+          ? "Hide Quiz Builder"
+          : "Show Quiz Builder";
+      }
+    });
   }
 });
 
@@ -556,6 +668,12 @@ socket.on("triggerNuke", playNukeAnimation);
 socket.on("answer_progress", ({ answered, total }) => {
   const el = document.getElementById("answerProgress");
   if (el) el.textContent = `${answered} / ${total} answered`;
+
+  // Update banner question counter if quiz data is available
+  const bannerCounter = document.getElementById("bannerQuestionText");
+  if (bannerCounter && window.lastQuizData) {
+    bannerCounter.textContent = `${answered} / ${total} answered`;
+  }
 });
 
 socket.on("quizAccuracy", (accuracyData) => {
@@ -606,6 +724,7 @@ socket.on("player_list", ({ players }) => {
   names = players.map((p) => p.name);
   update_namelist();
 });
+
 socket.on("player_joined", ({ players }) => {
   const newest = players[players.length - 1];
   names = players.map((p) => p.name);

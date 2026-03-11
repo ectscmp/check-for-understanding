@@ -978,6 +978,9 @@ app.get("/join/:roomcode", (req, res) => {
 app.get("/create", (req, res) => {
   res.sendFile(join(__dirname, "public", "admin.html"));
 });
+app.get("/helper", (req, res) => {
+  res.sendFile(join(__dirname, "public", "helper.html"));
+});
 // ═══════════════════════════════════════════════════════════════════════════
 // SERVER START
 // ═══════════════════════════════════════════════════════════════════════════

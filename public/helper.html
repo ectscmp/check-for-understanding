@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quiz URL Builder</title>
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div>
+        <h1 style="text-align: left; margin: 0; font-size: 1.25rem">
+          🛠 Quiz URL Builder
+        </h1>
+      </div>
+      <div class="top-bar-actions">
+        <a href="/admin"><button id="backbtn">← Admin</button></a>
+        <button id="themeToggle">🌙</button>
+      </div>
+    </header>
+
+    <div class="helper-page">
+      <p class="helper-subtitle">
+        Paste quiz JSON → generate a shareable /create URL, then preview your
+        quiz
+      </p>
+
+      <div class="helper-grid" id="helperGrid">
+        <!-- LEFT: Config inputs -->
+        <div class="helper-card">
+          <div class="helper-card-header">
+            <span class="helper-card-icon">📝</span>
+            <h3>Quiz Config</h3>
+          </div>
+          <div class="helper-card-body">
+            <div class="helper-field-row">
+              <div class="helper-field">
+                <label>Room Name</label>
+                <input
+                  type="text"
+                  id="roomName"
+                  placeholder="e.g. Science Quiz"
+                />
+              </div>
+              <div class="helper-field">
+                <label>Room Code (optional)</label>
+                <input
+                  type="text"
+                  id="roomCode"
+                  placeholder="e.g. SCI101"
+                  maxlength="10"
+                />
+              </div>
+            </div>
+
+            <div class="helper-field">
+              <label>Quiz JSON</label>
+              <textarea
+                id="jsonInput"
+                rows="13"
+                placeholder="Paste your quiz JSON here..."
+              ></textarea>
+              <div class="helper-json-status">
+                <span
+                  id="jsonStatus"
+                  class="helper-badge"
+                  style="display: none"
+                ></span>
+                <span id="questionCount" class="helper-q-count"></span>
+              </div>
+            </div>
+
+            <button class="helper-generate-btn" onclick="generateURL()">
+              ⚡ Generate URL
+            </button>
+
+            <details style="margin-top: 16px">
+              <summary class="helper-sample-toggle">
+                📋 Sample JSON format
+              </summary>
+              <div style="margin-top: 10px">
+                <div class="helper-sample-block" id="sampleJson"></div>
+                <button class="helper-load-sample-btn" onclick="loadSample()">
+                  Load sample
+                </button>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- RIGHT: Output -->
+        <div class="helper-card">
+          <div class="helper-card-header">
+            <span class="helper-card-icon">🔗</span>
+            <h3>Generated URL</h3>
+          </div>
+          <div class="helper-card-body">
+            <div class="helper-field">
+              <label>Create-Room URL</label>
+              <div class="helper-output-row">
+                <div class="helper-output-box empty" id="urlOutput">
+                  URL will appear after generation
+                </div>
+                <button
+                  class="helper-copy-btn"
+                  id="copyBtn"
+                  onclick="copyURL()"
+                  disabled
+                  title="Copy URL"
+                >
+                  📋
+                </button>
+              </div>
+            </div>
+
+            <button
+              class="helper-open-btn"
+              id="openBtn"
+              onclick="openURL()"
+              disabled
+            >
+              🚀 Open in Admin
+            </button>
+
+            <div class="helper-field" style="margin-top: 16px">
+              <label>Join Link (share with players)</label>
+              <div class="helper-output-box empty" id="joinOutput">
+                Set a room code to get a join link
+              </div>
+            </div>
+
+            <div class="helper-field" style="margin-top: 16px">
+              <label>URL Breakdown</label>
+              <div class="helper-breakdown" id="breakdown"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FULL WIDTH: Preview -->
+        <div class="helper-card helper-preview" id="previewSection">
+          <div class="helper-card-header">
+            <span class="helper-card-icon">👁</span>
+            <h3>Quiz Preview</h3>
+            <span
+              id="previewCount"
+              style="
+                margin-left: auto;
+                font-size: 0.75rem;
+                color: #64748b;
+                font-weight: 600;
+              "
+            ></span>
+          </div>
+          <div class="helper-card-body">
+            <div class="helper-preview-list" id="previewList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="helperToast">✓ Copied!</div>
+    <div id="empty"></div>
+    <footer class="footer">
+      <div class="footer-content">
+        <p>Developed by Coby Hughes</p>
+        <a
+          href="https://github.com/c-o-b-a-x"
+          target="_blank"
+          class="github-link"
+        >
+          <img
+            src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
+            alt="GitHub Logo"
+            class="github-logo"
+          />
+        </a>
+      </div>
+    </footer>
+
+    <script>
+      /* =====================
+       THEME
+    ===================== */
+      function setCookie(name, value, days = 365) {
+        const date = new Date();
+        date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+        document.cookie = `${name}=${value}; expires=${date.toUTCString()}; path=/`;
+      }
+      function getCookie(name) {
+        for (const c of document.cookie.split("; ")) {
+          const [k, v] = c.split("=");
+          if (k === name) return v;
+        }
+        return null;
+      }
+      function applyTheme(theme) {
+        document.body.classList.remove("light", "dark");
+        document.body.classList.add(theme);
+        const btn = document.getElementById("themeToggle");
+        if (btn) btn.textContent = theme === "light" ? "🌙" : "☀️";
+      }
+
+      applyTheme(getCookie("theme") || "light");
+
+      document.getElementById("themeToggle").onclick = () => {
+        const next = document.body.classList.contains("light")
+          ? "dark"
+          : "light";
+        applyTheme(next);
+        setCookie("theme", next);
+      };
+
+      /* =====================
+       SAMPLE DATA
+    ===================== */
+      const SAMPLE = [
+        {
+          question: "What is the capital of France?",
+          choices: {
+            correct: "Paris",
+            wrong1: "London",
+            wrong2: "Berlin",
+            wrong3: "Madrid",
+          },
+        },
+        {
+          question: "Which planet is closest to the Sun?",
+          choices: {
+            correct: "Mercury",
+            wrong1: "Venus",
+            wrong2: "Earth",
+            wrong3: "Mars",
+          },
+        },
+        {
+          question: "What is 12 × 8?",
+          choices: { correct: "96", wrong1: "84", wrong2: "108", wrong3: "88" },
+        },
+      ];
+
+      function renderSample() {
+        const raw = JSON.stringify(SAMPLE, null, 2);
+        const highlighted = raw
+          .replace(/"([^"]+)":/g, '<span class="sk">"$1"</span>:')
+          .replace(/: "([^"]+)"/g, ': <span class="sv">"$1"</span>');
+        document.getElementById("sampleJson").innerHTML = highlighted;
+      }
+      renderSample();
+
+      function loadSample() {
+        document.getElementById("jsonInput").value = JSON.stringify(
+          SAMPLE,
+          null,
+          2,
+        );
+        validateJSON();
+      }
+
+      /* =====================
+       LIVE JSON VALIDATION
+    ===================== */
+      document
+        .getElementById("jsonInput")
+        .addEventListener("input", validateJSON);
+
+      function validateJSON() {
+        const raw = document.getElementById("jsonInput").value.trim();
+        const statusEl = document.getElementById("jsonStatus");
+        const countEl = document.getElementById("questionCount");
+
+        if (!raw) {
+          statusEl.style.display = "none";
+          countEl.textContent = "";
+          return null;
+        }
+
+        try {
+          const parsed = JSON.parse(raw);
+          const arr = Array.isArray(parsed) ? parsed : parsed.quiz || null;
+
+          if (!arr || !Array.isArray(arr)) {
+            statusEl.className = "helper-badge helper-badge-warn";
+            statusEl.textContent = "⚠ Needs array or {quiz:[]}";
+            statusEl.style.display = "inline-flex";
+            countEl.textContent = "";
+            return null;
+          }
+
+          const valid = arr.filter(
+            (q) => q.question && (q.choices || q.options),
+          );
+          statusEl.className = "helper-badge helper-badge-ok";
+          statusEl.textContent = "✓ Valid";
+          statusEl.style.display = "inline-flex";
+          countEl.textContent = `${valid.length} question${valid.length !== 1 ? "s" : ""} detected`;
+          return arr;
+        } catch {
+          statusEl.className = "helper-badge helper-badge-err";
+          statusEl.textContent = "✗ Invalid JSON";
+          statusEl.style.display = "inline-flex";
+          countEl.textContent = "";
+          return null;
+        }
+      }
+
+      /* =====================
+       GENERATE URL
+    ===================== */
+      let generatedURL = null;
+
+      function generateURL() {
+        const quizArr = validateJSON();
+        if (!quizArr) {
+          const ta = document.getElementById("jsonInput");
+          ta.style.borderColor = "#ef4444";
+          setTimeout(() => (ta.style.borderColor = ""), 800);
+          return;
+        }
+
+        const roomName =
+          document.getElementById("roomName").value.trim() || "My Quiz";
+        const roomCode = document
+          .getElementById("roomCode")
+          .value.trim()
+          .toUpperCase();
+
+        const params = new URLSearchParams();
+        if (roomCode) params.set("code", roomCode);
+        params.set("name", roomName);
+        params.set("quiz", JSON.stringify(quizArr));
+
+        generatedURL = `${window.location.origin}/create?${params.toString()}`;
+
+        const urlEl = document.getElementById("urlOutput");
+        urlEl.classList.remove("empty");
+        urlEl.textContent =
+          generatedURL.length > 110
+            ? generatedURL.slice(0, 110) + "…"
+            : generatedURL;
+        urlEl.title = generatedURL;
+
+        const joinEl = document.getElementById("joinOutput");
+        if (roomCode) {
+          joinEl.classList.remove("empty");
+          joinEl.textContent = `${window.location.origin}/join/${roomCode}`;
+        } else {
+          joinEl.classList.add("empty");
+          joinEl.textContent = "Set a room code to get a join link";
+        }
+
+        document.getElementById("copyBtn").disabled = false;
+        document.getElementById("openBtn").disabled = false;
+
+        renderBreakdown(roomCode, roomName, quizArr.length);
+        renderPreview(quizArr);
+      }
+
+      function renderBreakdown(roomCode, roomName, count) {
+        const rows = [
+          { key: "Base URL", val: `${window.location.origin}/create` },
+          { key: "Room Code", val: roomCode || "(auto-generated)" },
+          { key: "Room Name", val: roomName },
+          { key: "Questions", val: `${count} encoded in quiz= param` },
+        ];
+        document.getElementById("breakdown").innerHTML = rows
+          .map(
+            (r) => `
+        <div class="helper-breakdown-row">
+          <span class="helper-breakdown-key">${r.key}</span>
+          <span class="helper-breakdown-val" title="${r.val}">${r.val}</span>
+        </div>
+      `,
+          )
+          .join("");
+      }
+
+      /* =====================
+       PREVIEW
+    ===================== */
+      function renderPreview(quizArr) {
+        const section = document.getElementById("previewSection");
+        const list = document.getElementById("previewList");
+        const count = document.getElementById("previewCount");
+
+        count.textContent = `${quizArr.length} question${quizArr.length !== 1 ? "s" : ""}`;
+
+        list.innerHTML = quizArr
+          .map((q, i) => {
+            let options = [];
+            if (q.choices) {
+              const { correct, ...wrongs } = q.choices;
+              options = [
+                { text: correct, isCorrect: true },
+                ...Object.values(wrongs)
+                  .filter(Boolean)
+                  .map((w) => ({ text: w, isCorrect: false })),
+              ];
+            } else if (q.options) {
+              options = q.options.map((o) => ({
+                text: o,
+                isCorrect: o === q.correctAnswer,
+              }));
+            }
+
+            return `
+          <div class="helper-q-card">
+            <span class="helper-q-number">Q${i + 1}</span>
+            <div class="helper-q-text">${escapeHTML(q.question)}</div>
+            <div class="helper-q-options">
+              ${options
+                .map(
+                  (opt) => `
+                <div class="helper-q-option ${opt.isCorrect ? "correct" : ""}">
+                  ${escapeHTML(opt.text)}
+                </div>
+              `,
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
+          })
+          .join("");
+
+        section.style.display = "block";
+      }
+
+      /* =====================
+       COPY / OPEN
+    ===================== */
+      function copyURL() {
+        if (!generatedURL) return;
+        navigator.clipboard
+          .writeText(generatedURL)
+          .then(() => {
+            showToast("✓ URL Copied!");
+            const btn = document.getElementById("copyBtn");
+            btn.textContent = "✓";
+            setTimeout(() => (btn.textContent = "📋"), 2000);
+          })
+          .catch(() => {
+            const ta = document.createElement("textarea");
+            ta.value = generatedURL;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            ta.remove();
+            showToast("✓ Copied!");
+          });
+      }
+
+      function openURL() {
+        if (generatedURL) window.open(generatedURL, "_blank");
+      }
+
+      function showToast(msg) {
+        const t = document.getElementById("helperToast");
+        t.textContent = msg;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2200);
+      }
+
+      function escapeHTML(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      document
+        .getElementById("roomCode")
+        .addEventListener("input", function () {
+          this.value = this.value.toUpperCase();
+        });
+    </script>
+  </body>
+</html>
