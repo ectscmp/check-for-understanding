@@ -19,7 +19,53 @@ const copyLinkBtn = document.getElementById("copyLinkBtn");
 
 let currentRoom = null;
 window.lastQuizData = null;
+/* =====================
+   JOIN TOAST
+===================== */
+let toastTimeout = null;
 
+function showJoinToast(name) {
+  let toast = document.getElementById("joinToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "joinToast";
+    document.body.appendChild(toast);
+  }
+
+  toast.textContent = `✅ ${name} has joined!`;
+  toast.classList.add("visible");
+
+  // Clear any existing timer so only 1 shows at a time
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove("visible");
+  }, 3000);
+}
+const toastStyles = document.createElement("style");
+toastStyles.textContent = `
+  #joinToast {
+    position: fixed;
+    top: 70px;
+    right: 45%;
+    background: #4ade80;
+    color: #0f172a;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  #joinToast.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+document.head.appendChild(toastStyles);
 /* =====================
    SHARE LINK
 ===================== */
@@ -514,8 +560,10 @@ socket.on("player_list", ({ players }) => {
   update_namelist();
 });
 socket.on("player_joined", ({ players }) => {
+  const newest = players[players.length - 1];
   names = players.map((p) => p.name);
   update_namelist();
+  if (newest) showJoinToast(newest.name);
 });
 
 /* =====================
