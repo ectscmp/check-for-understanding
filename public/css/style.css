@@ -284,9 +284,8 @@ body.light .modal-content {
    ========================= */
 #helperBtn {
   width: auto;
-  padding: 8px 14px;
-  background-color: rgba(56, 189, 248, 0.12);
-  color: #38bdf8;
+  padding: 6px 12px;
+  color: black;
   border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 6px;
   font-weight: 600;
