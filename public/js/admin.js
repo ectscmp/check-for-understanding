@@ -677,6 +677,8 @@ socket.on("answer_progress", ({ answered, total }) => {
 });
 
 socket.on("quizAccuracy", (accuracyData) => {
+  document.getElementById("chart")?.classList.remove("hidden");
+
   const ctx = document.getElementById("accuracyChart");
   if (!ctx) return;
   new Chart(ctx, {
