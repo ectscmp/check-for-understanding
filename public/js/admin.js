@@ -484,16 +484,37 @@ startQuizBtn.addEventListener("click", () => {
 /* =====================
    END QUIZ
 ===================== */
+// REPLACE the existing endQuizBtn listener:
+let endQuizPhase = 0; // 0 = running, 1 = ended (waiting to close)
+
 endQuizBtn.addEventListener("click", () => {
-  try {
+  if (!currentRoom) {
+    alert("Not in a room");
+    return;
+  }
+
+  if (endQuizPhase === 0) {
+    // First click — end quiz, lock room, show results
+    socket.emit("endquiz", currentRoom);
+    endQuizBtn.textContent = "Close Room";
+    endQuizBtn.style.background = "#dc2626"; // red to signal finality
+    endQuizPhase = 1;
+
     exitQuizRunningMode();
 
-    socket.emit("endquiz", currentRoom);
+    document.querySelectorAll(".hideonstart").forEach((el) => {
+      el.classList.remove("hidden");
+    });
+  } else {
+    // Second click — close room entirely
     socket.emit("close_room", currentRoom);
 
     currentRoom = null;
     window.lastQuizData = null;
     names = [];
+    endQuizPhase = 0;
+    endQuizBtn.textContent = "End Quiz";
+    endQuizBtn.style.background = "";
 
     roomCodeDisplay.textContent = "";
 
@@ -506,9 +527,7 @@ endQuizBtn.addEventListener("click", () => {
       "startHeader",
       "adminReportContainer",
     ];
-    ids.forEach((id) => {
-      document.getElementById(id)?.classList.add("hidden");
-    });
+    ids.forEach((id) => document.getElementById(id)?.classList.add("hidden"));
 
     startQuizBtn?.classList.add("hidden");
     endQuizBtn?.classList.add("hidden");
@@ -517,7 +536,6 @@ endQuizBtn.addEventListener("click", () => {
 
     shareBox.classList.remove("visible");
     shareUrlEl.value = "";
-
     update_namelist();
 
     const reportContainer = document.getElementById("adminReportContainer");
@@ -529,8 +547,6 @@ endQuizBtn.addEventListener("click", () => {
 
     document.getElementById("roomInput").value = "";
     document.getElementById("roomName").value = "";
-  } catch {
-    alert("Not in a room");
   }
 });
 
@@ -677,7 +693,7 @@ socket.on("answer_progress", ({ answered, total }) => {
 });
 
 socket.on("quizAccuracy", (accuracyData) => {
-  document.getElementById("chart")?.classList.remove("hidden");
+  document.getElementById("chart")?.classList.remove("hidden"); // ADD THIS
 
   const ctx = document.getElementById("accuracyChart");
   if (!ctx) return;

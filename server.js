@@ -142,34 +142,58 @@ function endQuiz(roomCode) {
   console.log(`Quiz ended in room ${roomCode}`);
 }
 
-function sendQuestion(roomCode) {
-  const room = rooms.get(roomCode);
-  if (!room) return;
+// REPLACE the existing sendQuestion function with these two:
 
-  const questionData = room.quizData[room.currentQuestion];
+function sendQuestionToPlayer(socket, room) {
+  const player = room.players.get(socket.id);
+  if (!player) return;
+
+  const questionData = room.quizData[player.currentQuestion];
   if (!questionData) {
-    endQuiz(roomCode);
+    socket.emit("quiz_complete_waiting");
     return;
   }
 
   let options = [];
-
   if (questionData.choices) {
     const { correct, ...wrongs } = questionData.choices;
     options = [correct, ...Object.values(wrongs).filter(Boolean)];
   } else if (questionData.options) {
     options = questionData.options;
   }
+  options = options.sort(() => Math.random() - 0.5);
 
+  socket.emit("question", {
+    question: questionData.question,
+    options,
+    questionNumber: player.currentQuestion + 1,
+    totalQuestions: room.quizData.length,
+  });
+}
+
+// Keep sendQuestion for the initial broadcast on quiz start only
+function sendQuestion(roomCode) {
+  const room = rooms.get(roomCode);
+  if (!room) return;
+
+  const questionData = room.quizData[0];
+  if (!questionData) return;
+
+  let options = [];
+  if (questionData.choices) {
+    const { correct, ...wrongs } = questionData.choices;
+    options = [correct, ...Object.values(wrongs).filter(Boolean)];
+  } else if (questionData.options) {
+    options = questionData.options;
+  }
   options = options.sort(() => Math.random() - 0.5);
 
   io.to(roomCode).emit("question", {
     question: questionData.question,
     options,
-    questionNumber: room.currentQuestion + 1,
+    questionNumber: 1,
+    totalQuestions: room.quizData.length,
   });
-
-  room.questionStartTime = Date.now();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -228,6 +252,7 @@ io.on("connection", (socket) => {
       questionProcessed: false,
       adminId: socket.id,
       isPublic: false,
+      locked: false, // ADD THIS
     });
 
     socket.join(roomCode);
@@ -281,6 +306,14 @@ io.on("connection", (socket) => {
       return;
     }
 
+    // ADD: block entry to locked rooms
+    if (room.locked) {
+      socket.emit("error", {
+        message: "This quiz has ended and is no longer accepting players.",
+      });
+      return;
+    }
+
     socket.join(roomCode);
     socket.roomCode = roomCode;
 
@@ -300,6 +333,7 @@ io.on("connection", (socket) => {
         name: username || `Player ${room.players.size + 1}`,
         score: 0,
         answers: [],
+        currentQuestion: 0, // ADD THIS
       });
     }
 
@@ -310,26 +344,10 @@ io.on("connection", (socket) => {
       players: Array.from(room.players.values()),
     });
 
-    // If quiz is already running, send the current question to the new joiner
+    // Late joiner — start them from their own question 0
     if (room.started && room.quizData) {
-      const questionData = room.quizData[room.currentQuestion];
-      if (questionData) {
-        let options = [];
-        if (questionData.choices) {
-          const { correct, ...wrongs } = questionData.choices;
-          options = [correct, ...Object.values(wrongs).filter(Boolean)];
-        } else if (questionData.options) {
-          options = questionData.options;
-        }
-        options = options.sort(() => Math.random() - 0.5);
-
-        socket.emit("quizStarted", { totalQuestions: room.quizData.length });
-        socket.emit("question", {
-          question: questionData.question,
-          options,
-          questionNumber: room.currentQuestion + 1,
-        });
-      }
+      socket.emit("quizStarted", { totalQuestions: room.quizData.length });
+      sendQuestionToPlayer(socket, room);
     }
   });
 
@@ -369,108 +387,73 @@ io.on("connection", (socket) => {
 
   // ── Start quiz ──
   socket.on("start_quiz", (roomCode) => {
-    console.log("start_quiz received with:", roomCode);
-
     const room = rooms.get(roomCode);
-    if (!room) {
-      console.log("❌ No room found");
+    if (!room || !room.quizData || room.quizData.length === 0 || room.started)
       return;
-    }
-
-    if (!room.quizData) {
-      console.log("❌ No quizData in room");
-      return;
-    }
-
-    if (room.quizData.length === 0) {
-      console.log("❌ quizData is empty");
-      return;
-    }
-
-    if (room.started) {
-      console.log("❌ quiz already started");
-      return;
-    }
-
-    console.log("✅ All checks passed, starting quiz");
 
     room.started = true;
     room.currentQuestion = 0;
     room.questionProcessed = false;
 
+    // Initialise per-player progress
+    room.players.forEach((player) => {
+      player.currentQuestion = 0;
+      player.answers = [];
+      player.score = 0;
+    });
+
     io.to(roomCode).emit("quizStarted", {
       totalQuestions: room.quizData.length,
     });
-
-    sendQuestion(roomCode);
+    sendQuestion(roomCode); // broadcast question 1 to everyone
   });
 
   // ── Submit answer ──
   socket.on("submit_answer", ({ roomCode, answer }) => {
     const room = rooms.get(roomCode);
-    if (!room) return;
+    if (!room || !room.started) return;
 
     const player = room.players.get(socket.id);
     if (!player) return;
 
-    // Snapshot the question index at the time of submission
-    const questionIndex = room.currentQuestion;
-
+    const questionIndex = player.currentQuestion;
     const questionData = room.quizData[questionIndex];
     if (!questionData) return;
 
     // Prevent re-submission for this question
     if (player.answers[questionIndex] !== undefined) return;
 
-    // Prevent concurrent allAnswered triggers
-    if (room.questionProcessed) return;
-
     player.answers[questionIndex] = answer;
 
     const correctAnswer =
       questionData.choices?.correct || questionData.correctAnswer;
+    const isCorrect = answer === correctAnswer;
+    if (isCorrect) player.score += 1;
 
-    if (answer === correctAnswer) {
-      player.score += 1;
-    }
-
-    const answeredCount = Array.from(room.players.values()).filter(
-      (p) => p.answers[questionIndex] !== undefined,
-    ).length;
-
-    io.to(roomCode).emit("answer_progress", {
-      answered: answeredCount,
-      total: room.players.size,
+    // Tell this player whether they were right
+    socket.emit("question_results", {
+      correctAnswer,
+      isCorrect,
+      score: player.score,
     });
 
-    const allAnswered =
-      room.players.size > 0 &&
-      Array.from(room.players.values()).every(
-        (p) => p.answers[questionIndex] !== undefined,
-      );
+    // Update admin with overall progress across all players & questions
+    const totalAnswers = Array.from(room.players.values()).reduce(
+      (sum, p) => sum + Object.keys(p.answers).length,
+      0,
+    );
+    const totalPossible = room.players.size * room.quizData.length;
+    io.to(room.adminId).emit("answer_progress", {
+      answered: totalAnswers,
+      total: totalPossible,
+    });
 
-    if (allAnswered) {
-      // Lock immediately to prevent any concurrent triggers
-      room.questionProcessed = true;
+    // Advance this player to their next question
+    player.currentQuestion += 1;
 
-      io.to(roomCode).emit("question_results", {
-        correctAnswer,
-        scores: Array.from(room.players.values()).map((p) => ({
-          name: p.name,
-          score: p.score,
-        })),
-      });
-
-      const detailedReports = generateAdminReport(room);
-      io.to(room.adminId).emit("adminReport", detailedReports);
-
-      room.currentQuestion += 1;
-
-      setTimeout(() => {
-        room.questionProcessed = false; // Unlock for the next question
-        sendQuestion(roomCode);
-      }, 2000);
-    }
+    setTimeout(() => {
+      sendQuestionToPlayer(socket, room);
+    }, 1500); // brief pause so they can see the result
   });
 
   // ── End quiz manually ──
@@ -479,7 +462,9 @@ io.on("connection", (socket) => {
     if (!room) return;
     if (socket.id !== room.adminId) return;
 
-    endQuiz(roomCode);
+    room.locked = true; // no new joiners
+
+    endQuiz(roomCode); // sends results & reports to everyone
     socket.emit("quizEnded", roomCode);
   });
 

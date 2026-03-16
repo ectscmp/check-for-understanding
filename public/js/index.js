@@ -509,8 +509,11 @@ socket.on("playerReport", (report) => {
    RESULTS
 ===================== */
 
-socket.on("question_results", ({ correctAnswer, scores }) => {
-  statusEl.textContent = `Correct answer: ${correctAnswer}`;
+// REPLACE the existing question_results handler:
+socket.on("question_results", ({ correctAnswer, isCorrect, score }) => {
+  statusEl.textContent = isCorrect
+    ? `✅ Correct! Score: ${score}`
+    : `❌ Wrong — correct answer was: ${correctAnswer}. Score: ${score}`;
 });
 
 socket.on("quizResults", ({ finalScores }) => {
@@ -560,4 +563,13 @@ socket.on("kicked", () => {
   alert("You were kicked from the room.");
 
   window.location.href = "/";
+});
+socket.on("quiz_complete_waiting", () => {
+  gameArea.style.display = "none";
+  statusEl.innerHTML = `
+    <div style="text-align:center; padding: 20px;">
+      <h2>🎉 You're done!</h2>
+      <p>Waiting for the admin to end the quiz...</p>
+    </div>
+  `;
 });
