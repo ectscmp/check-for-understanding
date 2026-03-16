@@ -5,9 +5,392 @@
     <title>Quiz App - Join Room</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/css/style.css" />
+    <style>
+      /* ══════════════════════════════════════
+         SETTINGS — all styles self-contained
+         so they never conflict with style.css
+      ══════════════════════════════════════ */
+
+      /* Gear button */
+      #settingsBtn {
+        background: transparent;
+        border: none;
+        font-size: 1.3rem;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 8px;
+        line-height: 1;
+        transition:
+          transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+          background 0.2s;
+        color: inherit;
+      }
+      #settingsBtn:hover {
+        background: rgba(128, 128, 128, 0.12);
+        transform: rotate(72deg);
+      }
+
+      /* Overlay — sits directly on <body> */
+      #settingsOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+        z-index: 9000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+      }
+      #settingsOverlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      /* Drawer — slides in from right */
+      #settingsDrawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: min(380px, 100vw);
+        height: 100dvh;
+        z-index: 9001;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        /* Colours via body class */
+        background: var(--sd-bg);
+        border-left: 1px solid var(--sd-border);
+        box-shadow: -12px 0 48px rgba(0, 0, 0, 0.18);
+      }
+      #settingsDrawer.open {
+        transform: translateX(0);
+      }
+
+      body.light {
+        --sd-bg: #f9fafb;
+        --sd-border: rgba(0, 0, 0, 0.08);
+        --sd-text: #111827;
+        --sd-muted: #6b7280;
+        --sd-section-border: rgba(0, 0, 0, 0.06);
+        --sd-input-border: rgba(0, 0, 0, 0.18);
+        --sd-hover: rgba(0, 0, 0, 0.05);
+        --sd-toggle-off: #d1d5db;
+      }
+      body.dark {
+        --sd-bg: #18212f;
+        --sd-border: rgba(255, 255, 255, 0.07);
+        --sd-text: #f1f5f9;
+        --sd-muted: #94a3b8;
+        --sd-section-border: rgba(255, 255, 255, 0.05);
+        --sd-input-border: rgba(255, 255, 255, 0.15);
+        --sd-hover: rgba(255, 255, 255, 0.05);
+        --sd-toggle-off: #374151;
+      }
+
+      /* Header strip */
+      .sd-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--sd-section-border);
+        flex-shrink: 0;
+        color: var(--sd-text);
+      }
+      .sd-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .sd-close {
+        background: transparent;
+        border: none;
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 7px;
+        color: var(--sd-muted);
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .sd-close:hover {
+        background: var(--sd-hover);
+        color: var(--sd-text);
+      }
+
+      /* Scrollable body */
+      .sd-body {
+        overflow-y: auto;
+        flex: 1;
+        color: var(--sd-text);
+        padding-bottom: 24px;
+      }
+      .sd-body::-webkit-scrollbar {
+        width: 5px;
+      }
+      .sd-body::-webkit-scrollbar-thumb {
+        background: var(--sd-toggle-off);
+        border-radius: 4px;
+      }
+
+      /* Section */
+      .sd-section {
+        padding: 16px 22px;
+        border-bottom: 1px solid var(--sd-section-border);
+      }
+      .sd-label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--sd-muted);
+        margin-bottom: 10px;
+      }
+
+      /* Text input row */
+      .sd-input-row {
+        display: flex;
+        gap: 8px;
+      }
+      .sd-input {
+        flex: 1;
+        padding: 9px 12px;
+        border-radius: 8px;
+        border: 1.5px solid var(--sd-input-border);
+        background: transparent;
+        color: var(--sd-text);
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.2s;
+        font-family: inherit;
+      }
+      .sd-input:focus {
+        border-color: var(--accent, #6366f1);
+      }
+      .sd-save-btn {
+        padding: 9px 16px;
+        background: var(--accent, #6366f1);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition:
+          filter 0.15s,
+          transform 0.1s;
+        font-family: inherit;
+      }
+      .sd-save-btn:hover {
+        filter: brightness(1.1);
+      }
+      .sd-save-btn:active {
+        transform: scale(0.97);
+      }
+      .sd-save-btn.sd-saved {
+        background: #22c55e !important;
+      }
+
+      /* Theme pills */
+      .sd-pills {
+        display: flex;
+        gap: 8px;
+      }
+      .sd-pill {
+        flex: 1;
+        padding: 8px 6px;
+        border-radius: 9px;
+        border: 1.5px solid var(--sd-input-border);
+        background: transparent;
+        color: var(--sd-text);
+        font-size: 0.83rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.18s;
+        font-family: inherit;
+        text-align: center;
+      }
+      .sd-pill:hover {
+        border-color: var(--accent, #6366f1);
+      }
+      .sd-pill.active {
+        background: var(--accent, #6366f1);
+        border-color: var(--accent, #6366f1);
+        color: #fff;
+      }
+
+      /* Accent swatches */
+      .sd-swatches {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .sd-swatch {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2.5px solid transparent;
+        cursor: pointer;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+        outline: none;
+        padding: 0;
+      }
+      .sd-swatch:hover {
+        transform: scale(1.18);
+      }
+      .sd-swatch.active {
+        box-shadow:
+          0 0 0 2px var(--sd-bg),
+          0 0 0 4px var(--accent, #6366f1);
+      }
+      .sd-color-custom {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px dashed var(--sd-input-border);
+        padding: 0;
+        cursor: pointer;
+        background: transparent;
+        outline: none;
+      }
+      .sd-color-custom::-webkit-color-swatch-wrapper {
+        padding: 0;
+        border-radius: 50%;
+      }
+      .sd-color-custom::-webkit-color-swatch {
+        border: none;
+        border-radius: 50%;
+      }
+
+      /* Range slider */
+      .sd-range-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .sd-range {
+        flex: 1;
+        accent-color: var(--accent, #6366f1);
+        cursor: pointer;
+        height: 4px;
+      }
+      .sd-size-a {
+        font-size: 0.8rem;
+        color: var(--sd-muted);
+      }
+      .sd-size-a.big {
+        font-size: 1.15rem;
+      }
+      .sd-badge {
+        background: var(--accent, #6366f1);
+        color: #fff;
+        border-radius: 6px;
+        padding: 2px 9px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        min-width: 42px;
+        text-align: center;
+      }
+
+      /* Toggle row */
+      .sd-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .sd-toggle-info p {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--sd-muted);
+        margin-top: 2px;
+        line-height: 1.3;
+      }
+      .sd-toggle-info strong {
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      .sd-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+        flex-shrink: 0;
+      }
+      .sd-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .sd-track {
+        position: absolute;
+        inset: 0;
+        background: var(--sd-toggle-off);
+        border-radius: 24px;
+        transition: background 0.22s;
+        cursor: pointer;
+      }
+      .sd-track::before {
+        content: "";
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        left: 3px;
+        top: 3px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .sd-switch input:checked + .sd-track {
+        background: var(--accent, #6366f1);
+      }
+      .sd-switch input:checked + .sd-track::before {
+        transform: translateX(20px);
+      }
+
+      /* Reset button */
+      .sd-reset {
+        width: 100%;
+        padding: 10px;
+        background: transparent;
+        border: 1.5px dashed rgba(239, 68, 68, 0.4);
+        color: #ef4444;
+        border-radius: 9px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        font-family: inherit;
+        transition:
+          background 0.18s,
+          border-color 0.18s;
+      }
+      .sd-reset:hover {
+        background: rgba(239, 68, 68, 0.07);
+        border-color: #ef4444;
+      }
+
+      /* Quiz font-size variable */
+      #question {
+        font-size: calc(var(--quiz-font-size, 16px) * 1.25) !important;
+      }
+      .answer-btn {
+        font-size: var(--quiz-font-size, 16px) !important;
+      }
+    </style>
   </head>
 
-  <body>
+  <body class="light">
     <header class="top-bar">
       <div>
         <h1>Quiz App</h1>
@@ -15,6 +398,9 @@
       <div class="top-bar-actions">
         <button id="admin_btn">Admin Dashboard</button>
         <button id="themeToggle">🌙</button>
+        <button id="settingsBtn" title="Settings">
+          <span id="settingsIcon">⚙️</span>
+        </button>
       </div>
     </header>
 
@@ -68,8 +454,200 @@
       </div>
     </main>
 
-    <!-- Player Report will be dynamically inserted here -->
     <div id="playerReportContainer" class="hidden"></div>
+
+    <!-- ════════════════════════════════════════
+         SETTINGS OVERLAY + DRAWER
+         Must be direct children of <body>
+         so position:fixed works correctly
+    ════════════════════════════════════════ -->
+    <div id="settingsOverlay"></div>
+
+    <div id="settingsDrawer">
+      <div class="sd-header">
+        <h2>⚙️ Settings</h2>
+        <button
+          class="sd-close"
+          id="closeSettingsBtn"
+          aria-label="Close settings"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="sd-body">
+        <!-- Default username -->
+        <div class="sd-section">
+          <span class="sd-label">Default Username</span>
+          <div class="sd-input-row">
+            <input
+              id="setting-username"
+              type="text"
+              class="sd-input"
+              placeholder="Your name..."
+              maxlength="20"
+              autocomplete="off"
+            />
+            <button class="sd-save-btn" id="saveUsernameBtn">Save</button>
+          </div>
+          <p
+            style="font-size: 0.75rem; color: var(--sd-muted); margin: 6px 0 0"
+          >
+            Auto-fills your name when joining a room
+          </p>
+        </div>
+
+        <!-- Theme -->
+        <div class="sd-section">
+          <span class="sd-label">Theme</span>
+          <div class="sd-pills">
+            <button class="sd-pill" data-theme="light">☀️ Light</button>
+            <button class="sd-pill" data-theme="dark">🌙 Dark</button>
+            <button class="sd-pill" data-theme="system">💻 System</button>
+          </div>
+        </div>
+
+        <!-- Accent colour -->
+        <div class="sd-section">
+          <span class="sd-label">Accent Colour</span>
+          <div class="sd-swatches">
+            <button
+              class="sd-swatch"
+              data-color="#6366f1"
+              style="background: #6366f1"
+              title="Indigo"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#10b981"
+              style="background: #10b981"
+              title="Emerald"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#f59e0b"
+              style="background: #f59e0b"
+              title="Amber"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#ef4444"
+              style="background: #ef4444"
+              title="Red"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#8b5cf6"
+              style="background: #8b5cf6"
+              title="Violet"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#06b6d4"
+              style="background: #06b6d4"
+              title="Cyan"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#ec4899"
+              style="background: #ec4899"
+              title="Pink"
+            ></button>
+            <input
+              type="color"
+              id="customAccentPicker"
+              class="sd-color-custom"
+              title="Custom colour"
+              value="#6366f1"
+            />
+          </div>
+        </div>
+
+        <!-- Font size -->
+        <div class="sd-section">
+          <span class="sd-label">Font Size</span>
+          <div class="sd-range-row">
+            <span class="sd-size-a">A</span>
+            <input
+              type="range"
+              id="fontSizeRange"
+              class="sd-range"
+              min="14"
+              max="24"
+              step="1"
+              value="16"
+            />
+            <span class="sd-size-a big">A</span>
+            <span id="fontSizeValue" class="sd-badge">16px</span>
+          </div>
+        </div>
+
+        <!-- Confirm before submit -->
+        <div class="sd-section">
+          <div class="sd-toggle-row">
+            <div class="sd-toggle-info">
+              <strong>Confirm Before Submitting</strong>
+              <p>Ask "Are you sure?" before locking in your answer</p>
+            </div>
+            <label class="sd-switch">
+              <input type="checkbox" id="setting-confirm" />
+              <span class="sd-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Sound effects -->
+        <div class="sd-section">
+          <div class="sd-toggle-row">
+            <div class="sd-toggle-info">
+              <strong>Sound Effects</strong>
+              <p>Play a tone on correct / wrong answers</p>
+            </div>
+            <label class="sd-switch">
+              <input type="checkbox" id="setting-sounds" checked />
+              <span class="sd-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Keyboard shortcuts -->
+        <div class="sd-section">
+          <div class="sd-toggle-row">
+            <div class="sd-toggle-info">
+              <strong>Keyboard Shortcuts</strong>
+              <p>Press 1–4 to select an answer</p>
+            </div>
+            <label class="sd-switch">
+              <input type="checkbox" id="setting-keyboard" checked />
+              <span class="sd-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Show progress -->
+        <div class="sd-section">
+          <div class="sd-toggle-row">
+            <div class="sd-toggle-info">
+              <strong>Show Answer Progress</strong>
+              <p>Display how many players have answered</p>
+            </div>
+            <label class="sd-switch">
+              <input type="checkbox" id="setting-progress" checked />
+              <span class="sd-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Reset -->
+        <div class="sd-section">
+          <button id="resetSettingsBtn" class="sd-reset">
+            ↺ Reset All Settings
+          </button>
+        </div>
+      </div>
+      <!-- /.sd-body -->
+    </div>
+    <!-- /#settingsDrawer -->
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/index.js"></script>
