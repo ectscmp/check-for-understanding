@@ -303,7 +303,9 @@ button:active {
   border-top: 1px solid var(--border);
   backdrop-filter: blur(12px);
 }
-
+#footer-text {
+  padding-bottom: 5px;
+}
 .footer-content {
   display: flex;
   align-items: center;
@@ -311,20 +313,19 @@ button:active {
   gap: 10px;
   font-size: 0.8rem;
   color: var(--text-muted);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.16em;
 }
 
 .github-logo {
   width: 18px;
   height: 18px;
-  filter: invert(1) opacity(0.5);
+  filter: invert(1);
   transition: var(--transition);
 }
-
 .github-link:hover .github-logo,
 .github-link:hover {
   opacity: 0.9;
-  filter: invert(1);
+  filter: invert(0.5);
 }
 
 /* ===== DASHBOARD ===== */

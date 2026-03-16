@@ -452,6 +452,7 @@ function displayPlayerReport(report) {
     reportContainer.id = "playerReportContainer";
     document.body.appendChild(reportContainer);
   }
+  reportContainer.classList.remove("hidden");
 
   let reportHTML = `
     <h2>Your Results</h2>
