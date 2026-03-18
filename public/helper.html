@@ -4,6 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quiz URL Builder</title>
+    <!--
+      Theme boot: read the shared localStorage key before first paint
+      so there is never a flash of the wrong theme.
+    -->
+    <script>
+      (function () {
+        try {
+          var s = JSON.parse(localStorage.getItem("quizSettings"));
+          var theme = s && s.theme ? s.theme : "light";
+          if (theme === "system") {
+            theme = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.classList.add(theme);
+        } catch (_) {
+          document.documentElement.classList.add("light");
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="./css/style.css" />
   </head>
   <body>
@@ -157,6 +177,7 @@
 
     <div id="helperToast">✓ Copied!</div>
     <div id="empty"></div>
+
     <footer class="footer">
       <div class="footer-content">
         <h3 id="footer-text">Developed by Coby Hughes</h3>
@@ -176,40 +197,69 @@
 
     <script>
       /* =====================
-       THEME
-    ===================== */
-      function setCookie(name, value, days = 365) {
-        const date = new Date();
-        date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-        document.cookie = `${name}=${value}; expires=${date.toUTCString()}; path=/`;
-      }
-      function getCookie(name) {
-        for (const c of document.cookie.split("; ")) {
-          const [k, v] = c.split("=");
-          if (k === name) return v;
+         THEME
+         Reads and writes the shared "quizSettings" localStorage key
+         so theme persists across join, admin, and helper pages.
+      ===================== */
+      function getThemeSetting() {
+        try {
+          const s = JSON.parse(localStorage.getItem("quizSettings"));
+          return s && s.theme ? s.theme : "light";
+        } catch {
+          return "light";
         }
-        return null;
-      }
-      function applyTheme(theme) {
-        document.body.classList.remove("light", "dark");
-        document.body.classList.add(theme);
-        const btn = document.getElementById("themeToggle");
-        if (btn) btn.textContent = theme === "light" ? "🌙" : "☀️";
       }
 
-      applyTheme(getCookie("theme") || "light");
+      function setThemeSetting(theme) {
+        try {
+          const s = JSON.parse(localStorage.getItem("quizSettings")) || {};
+          s.theme = theme;
+          localStorage.setItem("quizSettings", JSON.stringify(s));
+        } catch {
+          localStorage.setItem("quizSettings", JSON.stringify({ theme }));
+        }
+      }
+
+      function resolveTheme(theme) {
+        if (theme === "system") {
+          return window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }
+        return theme;
+      }
+
+      function applyTheme(theme) {
+        const resolved = resolveTheme(theme);
+        document.body.classList.remove("light", "dark");
+        document.body.classList.add(resolved);
+        // Keep <html> class in sync with the boot script
+        document.documentElement.classList.remove("light", "dark");
+        document.documentElement.classList.add(resolved);
+        const btn = document.getElementById("themeToggle");
+        if (btn) btn.textContent = resolved === "light" ? "🌙" : "☀️";
+      }
+
+      // Apply on load (boot script already set <html> class; this syncs <body> + button label)
+      applyTheme(getThemeSetting());
+
+      // Keep in sync if OS preference changes (for "system" mode)
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", () => {
+          if (getThemeSetting() === "system") applyTheme("system");
+        });
 
       document.getElementById("themeToggle").onclick = () => {
-        const next = document.body.classList.contains("light")
-          ? "dark"
-          : "light";
+        const current = resolveTheme(getThemeSetting());
+        const next = current === "light" ? "dark" : "light";
+        setThemeSetting(next);
         applyTheme(next);
-        setCookie("theme", next);
       };
 
       /* =====================
-       SAMPLE DATA
-    ===================== */
+         SAMPLE DATA
+      ===================== */
       const SAMPLE = [
         {
           question: "What is the capital of France?",
@@ -254,8 +304,8 @@
       }
 
       /* =====================
-       LIVE JSON VALIDATION
-    ===================== */
+         LIVE JSON VALIDATION
+      ===================== */
       document
         .getElementById("jsonInput")
         .addEventListener("input", validateJSON);
@@ -301,8 +351,8 @@
       }
 
       /* =====================
-       GENERATE URL
-    ===================== */
+         GENERATE URL
+      ===================== */
       let generatedURL = null;
 
       function generateURL() {
@@ -362,18 +412,18 @@
         document.getElementById("breakdown").innerHTML = rows
           .map(
             (r) => `
-        <div class="helper-breakdown-row">
-          <span class="helper-breakdown-key">${r.key}</span>
-          <span class="helper-breakdown-val" title="${r.val}">${r.val}</span>
-        </div>
-      `,
+              <div class="helper-breakdown-row">
+                <span class="helper-breakdown-key">${r.key}</span>
+                <span class="helper-breakdown-val" title="${r.val}">${r.val}</span>
+              </div>
+            `,
           )
           .join("");
       }
 
       /* =====================
-       PREVIEW
-    ===================== */
+         PREVIEW
+      ===================== */
       function renderPreview(quizArr) {
         const section = document.getElementById("previewSection");
         const list = document.getElementById("previewList");
@@ -400,22 +450,22 @@
             }
 
             return `
-          <div class="helper-q-card">
-            <span class="helper-q-number">Q${i + 1}</span>
-            <div class="helper-q-text">${escapeHTML(q.question)}</div>
-            <div class="helper-q-options">
-              ${options
-                .map(
-                  (opt) => `
-                <div class="helper-q-option ${opt.isCorrect ? "correct" : ""}">
-                  ${escapeHTML(opt.text)}
+              <div class="helper-q-card">
+                <span class="helper-q-number">Q${i + 1}</span>
+                <div class="helper-q-text">${escapeHTML(q.question)}</div>
+                <div class="helper-q-options">
+                  ${options
+                    .map(
+                      (opt) => `
+                      <div class="helper-q-option ${opt.isCorrect ? "correct" : ""}">
+                        ${escapeHTML(opt.text)}
+                      </div>
+                    `,
+                    )
+                    .join("")}
                 </div>
-              `,
-                )
-                .join("")}
-            </div>
-          </div>
-        `;
+              </div>
+            `;
           })
           .join("");
 
@@ -423,8 +473,8 @@
       }
 
       /* =====================
-       COPY / OPEN
-    ===================== */
+         COPY / OPEN
+      ===================== */
       function copyURL() {
         if (!generatedURL) return;
         navigator.clipboard

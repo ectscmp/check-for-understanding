@@ -74,7 +74,6 @@ document.head.appendChild(toastStyles);
 ===================== */
 function showShareLink(roomCode) {
   const url = `${window.location.origin}/join/${roomCode}`;
-  roomCode.split(" ", "%20");
   shareUrlEl.value = url;
   shareBox.classList.add("visible");
 }
@@ -103,36 +102,63 @@ copyLinkBtn.addEventListener("click", () => {
 
 /* =====================
    THEME
+   Reads and writes the shared "quizSettings" localStorage key
+   so theme choice persists across the join, admin, and helper pages.
 ===================== */
-function setCookie(name, value, days = 365) {
-  const date = new Date();
-  date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${value}; expires=${date.toUTCString()}; path=/`;
+function getThemeSetting() {
+  try {
+    const s = JSON.parse(localStorage.getItem("quizSettings"));
+    return s && s.theme ? s.theme : "light";
+  } catch {
+    return "light";
+  }
 }
 
-function getCookie(name) {
-  const cookies = document.cookie.split("; ");
-  for (const cookie of cookies) {
-    const [key, value] = cookie.split("=");
-    if (key === name) return value;
+function setThemeSetting(theme) {
+  try {
+    const s = JSON.parse(localStorage.getItem("quizSettings")) || {};
+    s.theme = theme;
+    localStorage.setItem("quizSettings", JSON.stringify(s));
+  } catch {
+    localStorage.setItem("quizSettings", JSON.stringify({ theme }));
   }
-  return null;
+}
+
+function resolveTheme(theme) {
+  if (theme === "system") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  }
+  return theme;
 }
 
 function applyTheme(theme) {
+  const resolved = resolveTheme(theme);
   document.body.classList.remove("light", "dark");
-  document.body.classList.add(theme);
+  document.body.classList.add(resolved);
+  // Also keep <html> class in sync (set by the boot script)
+  document.documentElement.classList.remove("light", "dark");
+  document.documentElement.classList.add(resolved);
   const themeBtn = document.getElementById("themeToggle");
-  if (themeBtn) themeBtn.textContent = theme === "light" ? "🌙" : "☀️";
+  if (themeBtn) themeBtn.textContent = resolved === "light" ? "🌙" : "☀️";
 }
 
-const savedTheme = getCookie("theme") || "light";
-applyTheme(savedTheme);
+// Apply on load
+applyTheme(getThemeSetting());
+
+// Keep in sync if OS preference changes (for "system" mode)
+window
+  .matchMedia("(prefers-color-scheme: dark)")
+  .addEventListener("change", () => {
+    if (getThemeSetting() === "system") applyTheme("system");
+  });
 
 document.getElementById("themeToggle").onclick = () => {
-  const newTheme = document.body.classList.contains("light") ? "dark" : "light";
-  applyTheme(newTheme);
-  setCookie("theme", newTheme);
+  const current = resolveTheme(getThemeSetting());
+  const next = current === "light" ? "dark" : "light";
+  setThemeSetting(next);
+  applyTheme(next);
 };
 
 /* =====================
@@ -187,15 +213,12 @@ function update_namelist() {
    QUIZ-RUNNING VISUAL STATE
 ===================== */
 function enterQuizRunningMode() {
-  // Show the running banner
   const banner = document.getElementById("quizRunningBanner");
   if (banner) banner.classList.remove("hidden");
 
-  // Hide quiz builder/JSON uploader
   const builderSection = document.getElementById("create");
   if (builderSection) builderSection.classList.add("hidden");
 
-  // Show restore toggle button
   const restoreBtn = document.getElementById("restoreBuilderBtn");
   if (restoreBtn) {
     restoreBtn.classList.remove("hidden");
@@ -204,15 +227,12 @@ function enterQuizRunningMode() {
 }
 
 function exitQuizRunningMode() {
-  // Hide running banner
   const banner = document.getElementById("quizRunningBanner");
   if (banner) banner.classList.add("hidden");
 
-  // Show builder again
   const builderSection = document.getElementById("create");
   if (builderSection) builderSection.classList.remove("hidden");
 
-  // Hide restore button
   const restoreBtn = document.getElementById("restoreBuilderBtn");
   if (restoreBtn) restoreBtn.classList.add("hidden");
 }
@@ -220,7 +240,6 @@ function exitQuizRunningMode() {
 // Inject quiz-running styles
 const quizRunningStyles = document.createElement("style");
 quizRunningStyles.textContent = `
-  /* ── Quiz Running Banner ── */
   #quizRunningBanner:not(.hidden) {
     display: flex;
     align-items: center;
@@ -235,34 +254,23 @@ quizRunningStyles.textContent = `
     animation: bannerPulse 2s ease-in-out infinite;
     box-shadow: 0 4px 20px rgba(34, 197, 94, 0.35);
   }
-
   #quizRunningBanner .banner-dot {
-    width: 10px;
-    height: 10px;
-    background: white;
-    border-radius: 50%;
+    width: 10px; height: 10px;
+    background: white; border-radius: 50%;
     animation: dot-blink 1s ease-in-out infinite;
     flex-shrink: 0;
   }
-
   #quizRunningBanner .banner-question-counter {
-    margin-left: auto;
-    font-size: 0.85rem;
-    opacity: 0.9;
-    font-weight: 600;
+    margin-left: auto; font-size: 0.85rem; opacity: 0.9; font-weight: 600;
   }
-
   @keyframes bannerPulse {
     0%, 100% { box-shadow: 0 4px 20px rgba(34, 197, 94, 0.35); }
-    50% { box-shadow: 0 4px 28px rgba(34, 197, 94, 0.6); }
+    50%       { box-shadow: 0 4px 28px rgba(34, 197, 94, 0.6); }
   }
-
   @keyframes dot-blink {
     0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.8); }
+    50%       { opacity: 0.4; transform: scale(0.8); }
   }
-
-  /* ── Restore builder button ── */
   #restoreBuilderBtn {
     background: transparent;
     border: 1.5px dashed currentColor;
@@ -301,16 +309,16 @@ function createRoom(customCode, roomName, isPublic, quizData) {
       "namelist",
       "startHeader",
     ];
-    ids.forEach((id) => {
-      document.getElementById(id)?.classList.remove("hidden");
-    });
+    ids.forEach((id) =>
+      document.getElementById(id)?.classList.remove("hidden"),
+    );
 
     startQuizBtn?.classList.remove("hidden");
     endQuizBtn?.classList.remove("hidden");
 
-    document.querySelectorAll(".hideoncreate").forEach((el) => {
-      el.classList.add("hidden");
-    });
+    document
+      .querySelectorAll(".hideoncreate")
+      .forEach((el) => el.classList.add("hidden"));
 
     showShareLink(response.roomCode);
 
@@ -368,7 +376,6 @@ document.getElementById("createQuizBtn").addEventListener("click", () => {
     wrongs.forEach((w, i) => {
       wrongsObj[`wrong${i + 1}`] = w;
     });
-
     quizData.push({ question, choices: { correct, ...wrongsObj } });
   });
 
@@ -474,18 +481,16 @@ startQuizBtn.addEventListener("click", () => {
   });
   socket.emit("start_quiz", currentRoom);
 
-  document.querySelectorAll(".hideonstart").forEach((el) => {
-    el.classList.add("hidden");
-  });
-
+  document
+    .querySelectorAll(".hideonstart")
+    .forEach((el) => el.classList.add("hidden"));
   enterQuizRunningMode();
 });
 
 /* =====================
    END QUIZ
 ===================== */
-// REPLACE the existing endQuizBtn listener:
-let endQuizPhase = 0; // 0 = running, 1 = ended (waiting to close)
+let endQuizPhase = 0;
 
 endQuizBtn.addEventListener("click", () => {
   if (!currentRoom) {
@@ -494,19 +499,16 @@ endQuizBtn.addEventListener("click", () => {
   }
 
   if (endQuizPhase === 0) {
-    // First click — end quiz, lock room, show results
     socket.emit("endquiz", currentRoom);
     endQuizBtn.textContent = "Close Room";
-    endQuizBtn.style.background = "#dc2626"; // red to signal finality
+    endQuizBtn.style.background = "#dc2626";
     endQuizPhase = 1;
 
     exitQuizRunningMode();
-
-    document.querySelectorAll(".hideonstart").forEach((el) => {
-      el.classList.remove("hidden");
-    });
+    document
+      .querySelectorAll(".hideonstart")
+      .forEach((el) => el.classList.remove("hidden"));
   } else {
-    // Second click — close room entirely
     socket.emit("close_room", currentRoom);
 
     currentRoom = null;
@@ -515,7 +517,6 @@ endQuizBtn.addEventListener("click", () => {
     endQuizPhase = 0;
     endQuizBtn.textContent = "End Quiz";
     endQuizBtn.style.background = "";
-
     roomCodeDisplay.textContent = "";
 
     const ids = [
@@ -541,10 +542,9 @@ endQuizBtn.addEventListener("click", () => {
     const reportContainer = document.getElementById("adminReportContainer");
     if (reportContainer) reportContainer.innerHTML = "";
 
-    document.querySelectorAll(".hideoncreate").forEach((el) => {
-      el.classList.remove("hidden");
-    });
-
+    document
+      .querySelectorAll(".hideoncreate")
+      .forEach((el) => el.classList.remove("hidden"));
     document.getElementById("roomInput").value = "";
     document.getElementById("roomName").value = "";
   }
@@ -574,21 +574,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("closeInfoModal").addEventListener("click", () => {
     infoModal.classList.add("hidden");
-    setCookie("info-seen", "true");
   });
 
   infoModal.addEventListener("click", (e) => {
-    if (e.target === infoModal) {
-      infoModal.classList.add("hidden");
-      setCookie("info-seen", "true");
-    }
+    if (e.target === infoModal) infoModal.classList.add("hidden");
   });
 
-  if (getCookie("info-seen") !== "true") {
-    infoModal.classList.remove("hidden");
-  }
-
-  // ── Restore builder toggle ──
+  // Restore builder toggle
   const restoreBtn = document.getElementById("restoreBuilderBtn");
   if (restoreBtn) {
     restoreBtn.addEventListener("click", () => {
@@ -685,7 +677,6 @@ socket.on("answer_progress", ({ answered, total }) => {
   const el = document.getElementById("answerProgress");
   if (el) el.textContent = `${answered} / ${total} answered`;
 
-  // Update banner question counter if quiz data is available
   const bannerCounter = document.getElementById("bannerQuestionText");
   if (bannerCounter && window.lastQuizData) {
     bannerCounter.textContent = `${answered} / ${total} answered`;
@@ -693,7 +684,7 @@ socket.on("answer_progress", ({ answered, total }) => {
 });
 
 socket.on("quizAccuracy", (accuracyData) => {
-  document.getElementById("chart")?.classList.remove("hidden"); // ADD THIS
+  document.getElementById("chart")?.classList.remove("hidden");
 
   const ctx = document.getElementById("accuracyChart");
   if (!ctx) return;
