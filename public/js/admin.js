@@ -101,27 +101,35 @@ copyLinkBtn.addEventListener("click", () => {
 });
 
 /* =====================
-   THEME
-   Reads and writes the shared "quizSettings" localStorage key
-   so theme choice persists across the join, admin, and helper pages.
+   SETTINGS
+   Reuses the shared "quizSettings" localStorage key so
+   the admin, join, and helper pages stay in sync.
 ===================== */
-function getThemeSetting() {
+const SETTINGS_KEY = "quizSettings";
+const DEFAULT_SETTINGS = {
+  username: "",
+  theme: "light",
+  accent: "#6366f1",
+  fontSize: 16,
+  confirm: false,
+  sounds: true,
+  keyboard: true,
+  progress: true,
+};
+
+function loadSettings() {
   try {
-    const s = JSON.parse(localStorage.getItem("quizSettings"));
-    return s && s.theme ? s.theme : "light";
+    return {
+      ...DEFAULT_SETTINGS,
+      ...JSON.parse(localStorage.getItem(SETTINGS_KEY)),
+    };
   } catch {
-    return "light";
+    return { ...DEFAULT_SETTINGS };
   }
 }
 
-function setThemeSetting(theme) {
-  try {
-    const s = JSON.parse(localStorage.getItem("quizSettings")) || {};
-    s.theme = theme;
-    localStorage.setItem("quizSettings", JSON.stringify(s));
-  } catch {
-    localStorage.setItem("quizSettings", JSON.stringify({ theme }));
-  }
+function saveSettings(settings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
 function resolveTheme(theme) {
@@ -133,33 +141,76 @@ function resolveTheme(theme) {
   return theme;
 }
 
-function applyTheme(theme) {
-  const resolved = resolveTheme(theme);
+function applySettings(settings) {
+  const resolved = resolveTheme(settings.theme);
   document.body.classList.remove("light", "dark");
   document.body.classList.add(resolved);
-  // Also keep <html> class in sync (set by the boot script)
   document.documentElement.classList.remove("light", "dark");
   document.documentElement.classList.add(resolved);
-  const themeBtn = document.getElementById("themeToggle");
-  if (themeBtn) themeBtn.textContent = resolved === "light" ? "🌙" : "☀️";
+  document.documentElement.style.setProperty("--accent", settings.accent);
+  document.documentElement.style.setProperty(
+    "--quiz-font-size",
+    `${settings.fontSize}px`,
+  );
 }
 
-// Apply on load
-applyTheme(getThemeSetting());
+function syncSettingsUI(settings) {
+  document
+    .querySelectorAll(".sd-pill")
+    .forEach((pill) =>
+      pill.classList.toggle("active", pill.dataset.theme === settings.theme),
+    );
+}
 
-// Keep in sync if OS preference changes (for "system" mode)
-window
-  .matchMedia("(prefers-color-scheme: dark)")
-  .addEventListener("change", () => {
-    if (getThemeSetting() === "system") applyTheme("system");
+const themeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+const settingsDrawer = document.getElementById("settingsDrawer");
+const settingsOverlay = document.getElementById("settingsOverlay");
+
+function openSettings() {
+  settingsDrawer.classList.add("open");
+  settingsOverlay.classList.add("open");
+  syncSettingsUI(loadSettings());
+}
+
+function closeSettings() {
+  settingsDrawer.classList.remove("open");
+  settingsOverlay.classList.remove("open");
+}
+
+applySettings(loadSettings());
+
+themeMediaQuery.addEventListener("change", () => {
+  const settings = loadSettings();
+  if (settings.theme === "system") applySettings(settings);
+});
+
+window.addEventListener("storage", (event) => {
+  if (event.key !== SETTINGS_KEY) return;
+  const settings = loadSettings();
+  applySettings(settings);
+  syncSettingsUI(settings);
+});
+
+document.getElementById("settingsBtn").addEventListener("click", openSettings);
+document
+  .getElementById("closeSettingsBtn")
+  .addEventListener("click", closeSettings);
+settingsOverlay.addEventListener("click", closeSettings);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && settingsDrawer.classList.contains("open")) {
+    closeSettings();
+  }
+});
+
+document.querySelectorAll(".sd-pill").forEach((pill) => {
+  pill.addEventListener("click", () => {
+    const settings = loadSettings();
+    settings.theme = pill.dataset.theme;
+    saveSettings(settings);
+    applySettings(settings);
+    syncSettingsUI(settings);
   });
-
-document.getElementById("themeToggle").onclick = () => {
-  const current = resolveTheme(getThemeSetting());
-  const next = current === "light" ? "dark" : "light";
-  setThemeSetting(next);
-  applyTheme(next);
-};
+});
 
 /* =====================
    QUESTION BUILDER
