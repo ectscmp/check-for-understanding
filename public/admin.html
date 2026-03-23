@@ -26,7 +26,9 @@
       <div class="top-bar-actions">
         <a href="/join"><button id="backbtn">Join a Quiz</button></a>
         <a href="/helper"><button id="helperBtn">🛠 URL Builder</button></a>
-        <button id="themeToggle">🌙</button>
+        <button id="settingsBtn" title="Settings" aria-label="Open settings">
+          <span id="settingsIcon">⚙️</span>
+        </button>
         <button id="Information">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -223,6 +225,38 @@
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     </div>
     <div id="adminReportContainer"></div>
+
+
+    <div id="settingsOverlay"></div>
+
+    <div id="settingsDrawer">
+      <div class="sd-header">
+        <h2>⚙️ Settings</h2>
+        <button
+          class="sd-close"
+          id="closeSettingsBtn"
+          aria-label="Close settings"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="sd-body">
+        <div class="sd-section">
+          <span class="sd-label">Theme</span>
+          <div class="sd-pills">
+            <button class="sd-pill" data-theme="light">☀️ Light</button>
+            <button class="sd-pill" data-theme="dark">🌙 Dark</button>
+            <button class="sd-pill" data-theme="system">💻 System</button>
+          </div>
+          <p
+            style="font-size: 0.75rem; color: var(--sd-muted); margin: 10px 0 0"
+          >
+            Uses the same saved preference as the join and helper pages.
+          </p>
+        </div>
+      </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/admin.js" defer></script>

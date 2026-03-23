@@ -89,6 +89,121 @@ copyLinkBtn.addEventListener("click", () => {
 });
 
 /* =====================
+<<<<<<< HEAD
+=======
+   SETTINGS
+   Reuses the shared "quizSettings" localStorage key so
+   the admin, join, and helper pages stay in sync.
+===================== */
+const SETTINGS_KEY = "quizSettings";
+const DEFAULT_SETTINGS = {
+  username: "",
+  theme: "light",
+  accent: "#6366f1",
+  fontSize: 16,
+  confirm: false,
+  sounds: true,
+  keyboard: true,
+  progress: true,
+};
+
+function loadSettings() {
+  try {
+    return {
+      ...DEFAULT_SETTINGS,
+      ...JSON.parse(localStorage.getItem(SETTINGS_KEY)),
+    };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+function saveSettings(settings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function resolveTheme(theme) {
+  if (theme === "system") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  }
+  return theme;
+}
+
+function applySettings(settings) {
+  const resolved = resolveTheme(settings.theme);
+  document.body.classList.remove("light", "dark");
+  document.body.classList.add(resolved);
+  document.documentElement.classList.remove("light", "dark");
+  document.documentElement.classList.add(resolved);
+  document.documentElement.style.setProperty("--accent", settings.accent);
+  document.documentElement.style.setProperty(
+    "--quiz-font-size",
+    `${settings.fontSize}px`,
+  );
+}
+
+function syncSettingsUI(settings) {
+  document
+    .querySelectorAll(".sd-pill")
+    .forEach((pill) =>
+      pill.classList.toggle("active", pill.dataset.theme === settings.theme),
+    );
+}
+
+const themeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+const settingsDrawer = document.getElementById("settingsDrawer");
+const settingsOverlay = document.getElementById("settingsOverlay");
+
+function openSettings() {
+  settingsDrawer.classList.add("open");
+  settingsOverlay.classList.add("open");
+  syncSettingsUI(loadSettings());
+}
+
+function closeSettings() {
+  settingsDrawer.classList.remove("open");
+  settingsOverlay.classList.remove("open");
+}
+
+applySettings(loadSettings());
+
+themeMediaQuery.addEventListener("change", () => {
+  const settings = loadSettings();
+  if (settings.theme === "system") applySettings(settings);
+});
+
+window.addEventListener("storage", (event) => {
+  if (event.key !== SETTINGS_KEY) return;
+  const settings = loadSettings();
+  applySettings(settings);
+  syncSettingsUI(settings);
+});
+
+document.getElementById("settingsBtn").addEventListener("click", openSettings);
+document
+  .getElementById("closeSettingsBtn")
+  .addEventListener("click", closeSettings);
+settingsOverlay.addEventListener("click", closeSettings);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && settingsDrawer.classList.contains("open")) {
+    closeSettings();
+  }
+});
+
+document.querySelectorAll(".sd-pill").forEach((pill) => {
+  pill.addEventListener("click", () => {
+    const settings = loadSettings();
+    settings.theme = pill.dataset.theme;
+    saveSettings(settings);
+    applySettings(settings);
+    syncSettingsUI(settings);
+  });
+});
+
+/* =====================
+>>>>>>> cf09bbed64f5d1e7e06d97a795d4e228472b9315
    QUESTION BUILDER
 ===================== */
 function createQuestionBlock(index) {
