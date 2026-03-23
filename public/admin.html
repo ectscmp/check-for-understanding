@@ -4,30 +4,21 @@
     <meta charset="UTF-8" />
     <title>Admin Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!--
-      Theme boot: read the shared localStorage key before first paint
-      so there is never a flash of the wrong theme.
-    -->
-    <script>
-      (function () {
-        try {
-          var s = JSON.parse(localStorage.getItem("quizSettings"));
-          var theme = s && s.theme ? s.theme : "light";
-          if (theme === "system") {
-            theme = window.matchMedia("(prefers-color-scheme: dark)").matches
-              ? "dark"
-              : "light";
-          }
-          document.documentElement.classList.add(theme);
-        } catch (_) {
-          document.documentElement.classList.add("light");
-        }
-      })();
-    </script>
     <link rel="stylesheet" href="./css/style.css" />
+    <!-- theme.js defines window.ThemeManager synchronously.
+         Loading it here (before <body>) means applyStored() can
+         be called the instant the parser opens <body>. -->
+    <script src="./js/theme.js"></script>
   </head>
 
   <body>
+    <!-- First thing in <body>: document.body now exists.
+         applyStored() reads localStorage and stamps body.light
+         or body.dark before the browser renders anything. -->
+    <script>
+      ThemeManager.applyStored();
+    </script>
+
     <header class="top-bar">
       <div>
         <h1>Admin Dashboard</h1>

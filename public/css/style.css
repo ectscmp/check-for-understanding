@@ -165,7 +165,7 @@ input::placeholder {
 
 input:focus {
   border-color: var(--accent);
-  background-color: rgba(16, 185, 129, 0.04);
+  background-color: var(--accent-dim);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
@@ -267,7 +267,7 @@ button:active {
 }
 
 .room-item:hover {
-  border-color: rgba(16, 185, 129, 0.3);
+  border-color: var(--accent-dim);
   background: var(--glass-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-glow);
@@ -532,7 +532,7 @@ pre {
   padding: 7px 14px;
   background: var(--accent-dim);
   color: var(--accent-light);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid var(--accent-dim);
   border-radius: var(--radius-sm);
   font-weight: 600;
   font-size: 0.8rem;
@@ -545,8 +545,8 @@ pre {
 }
 
 #helperBtn:hover {
-  background: rgba(16, 185, 129, 0.2);
-  border-color: rgba(16, 185, 129, 0.55);
+  background: var(--accent-dim);
+  border-color: var(--accent);
   box-shadow: 0 0 12px var(--accent-dim);
   transform: translateY(-1px);
 }
@@ -558,7 +558,7 @@ pre {
   gap: 12px;
   background: linear-gradient(
     135deg,
-    rgba(16, 185, 129, 0.15),
+    var(--accent-dim),
     rgba(5, 150, 105, 0.1)
   );
   color: var(--accent-light);
@@ -568,9 +568,9 @@ pre {
   font-size: 0.88rem;
   margin-top: 14px;
   margin-bottom: 4px;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: 1px solid var(--accent-dim);
   box-shadow:
-    0 0 24px rgba(16, 185, 129, 0.08),
+    0 0 24px var(--accent-dim),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -598,10 +598,10 @@ pre {
 @keyframes bannerPulse {
   0%,
   100% {
-    box-shadow: 0 0 24px rgba(16, 185, 129, 0.08);
+    box-shadow: 0 0 24px var(--accent-dim);
   }
   50% {
-    box-shadow: 0 0 32px rgba(16, 185, 129, 0.18);
+    box-shadow: 0 0 32px var(--accent-glow);
   }
 }
 
@@ -657,7 +657,7 @@ pre {
   border: 1px solid var(--border-strong);
   box-shadow:
     var(--shadow-card),
-    0 0 40px rgba(16, 185, 129, 0.06);
+    0 0 40px var(--accent-dim);
 }
 
 #playerReportContainer h2 {
@@ -768,8 +768,8 @@ pre {
 .share-box {
   display: none;
   margin-top: 14px;
-  background: rgba(16, 185, 129, 0.04);
-  border: 1px solid rgba(16, 185, 129, 0.18);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-dim);
   border-radius: var(--radius-md);
   padding: 14px 16px;
   gap: 10px;
@@ -816,7 +816,7 @@ pre {
   flex-shrink: 0;
   padding: 6px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  border: 1px solid var(--accent-dim);
   background: var(--accent-dim);
   color: var(--accent-light);
   font-size: 0.75rem;
@@ -830,14 +830,14 @@ pre {
 }
 
 .copy-btn:hover {
-  background: rgba(16, 185, 129, 0.2);
+  background: var(--accent-dim);
   box-shadow: 0 0 10px var(--accent-dim);
   transform: none;
 }
 
 .copy-btn.copied {
   color: var(--gold);
-  border-color: rgba(251, 191, 36, 0.35);
+  border-color: var(--gold-dim);
   background: var(--gold-dim);
 }
 
@@ -1145,11 +1145,11 @@ canvas > #accuracyChart {
 .btn-success {
   background: var(--accent-dim);
   color: var(--accent-light);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: 1px solid var(--accent-dim);
 }
 
 .btn-success:hover {
-  background: rgba(16, 185, 129, 0.2);
+  background: var(--accent-dim);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px var(--accent-dim);
 }
@@ -1227,7 +1227,7 @@ canvas > #accuracyChart {
 .form-group textarea:focus {
   border-color: var(--accent);
   background: var(--accent-dim);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 .form-group textarea {
@@ -1305,7 +1305,7 @@ canvas > #accuracyChart {
   background: var(--bg-depth-0);
   background-image: radial-gradient(
     ellipse 60% 60% at 50% 50%,
-    rgba(16, 185, 129, 0.05) 0%,
+    var(--accent-dim) 0%,
     transparent 70%
   );
 }
@@ -1445,7 +1445,7 @@ canvas > #accuracyChart {
   outline: none;
   border-color: var(--accent);
   background: var(--accent-dim);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 .helper-field textarea {
@@ -1466,7 +1466,7 @@ canvas > #accuracyChart {
 .helper-field textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 .helper-field-row {
@@ -1670,9 +1670,9 @@ canvas > #accuracyChart {
   width: 100%;
   margin-top: 10px;
   padding: 11px;
-  background: rgba(34, 211, 160, 0.08);
-  color: var(--green);
-  border: 1px solid rgba(34, 211, 160, 0.22);
+  background: var(--accent-dim);
+  color: var(--accent-light);
+  border: 1px solid var(--accent-dim);
   border-radius: var(--radius-sm);
   font-weight: 700;
   font-size: 0.85rem;
@@ -1684,8 +1684,8 @@ canvas > #accuracyChart {
 }
 
 .helper-open-btn:hover {
-  background: rgba(34, 211, 160, 0.15);
-  box-shadow: 0 0 16px rgba(34, 211, 160, 0.1);
+  background: var(--accent-dim);
+  box-shadow: 0 0 16px var(--accent-dim);
   transform: translateY(-1px);
 }
 
@@ -1755,7 +1755,7 @@ canvas > #accuracyChart {
 }
 
 .helper-q-card:hover {
-  border-color: rgba(16, 185, 129, 0.3);
+  border-color: var(--accent-dim);
   background: var(--glass-fill);
 }
 
@@ -1797,9 +1797,9 @@ canvas > #accuracyChart {
 }
 
 .helper-q-option.correct {
-  border-color: rgba(34, 211, 160, 0.4);
-  background: rgba(34, 211, 160, 0.07);
-  color: var(--green);
+  border-color: var(--accent-dim);
+  background: var(--accent-dim);
+  color: var(--accent-light);
   font-weight: 600;
 }
 
@@ -1888,7 +1888,7 @@ body.light {
   background-image:
     radial-gradient(
       ellipse 80% 60% at 20% -10%,
-      rgba(5, 150, 105, 0.04) 0%,
+      var(--accent-dim) 0%,
       transparent 60%
     ),
     radial-gradient(
@@ -1988,11 +1988,11 @@ body.light .helper-sample-block .sv {
 body.light #helperBtn {
   background: var(--accent-dim);
   color: var(--accent);
-  border-color: rgba(5, 150, 105, 0.3);
+  border-color: var(--accent-dim);
 }
 body.light #helperBtn:hover {
-  background: rgba(5, 150, 105, 0.18);
-  border-color: rgba(5, 150, 105, 0.55);
+  background: var(--accent-dim);
+  border-color: var(--accent);
 }
 
 body.light .banner-dot {
@@ -2019,8 +2019,8 @@ body.light .helper-q-option {
   color: var(--text-secondary);
 }
 body.light .helper-q-option.correct {
-  border-color: rgba(5, 150, 105, 0.4);
-  background: rgba(5, 150, 105, 0.07);
+  border-color: var(--accent-dim);
+  background: var(--accent-dim);
   color: var(--accent);
 }
 
@@ -2031,15 +2031,15 @@ body.light #downloadPlayerReportBtn {
 
 body.light .copy-btn {
   color: var(--accent);
-  border-color: rgba(5, 150, 105, 0.35);
+  border-color: var(--accent-dim);
   background: var(--accent-dim);
 }
 body.light .copy-btn:hover {
-  background: rgba(5, 150, 105, 0.18);
+  background: var(--accent-dim);
 }
 body.light .copy-btn.copied {
   color: var(--gold);
-  border-color: rgba(217, 119, 6, 0.35);
+  border-color: var(--gold-dim);
   background: var(--gold-dim);
 }
 
@@ -2047,8 +2047,8 @@ body.light .share-label {
   color: var(--accent);
 }
 body.light .share-box {
-  background: rgba(5, 150, 105, 0.04);
-  border-color: rgba(5, 150, 105, 0.16);
+  background: var(--accent-dim);
+  border-color: var(--accent-dim);
 }
 
 /* ===== SCROLLBAR ===== */
@@ -2103,7 +2103,6 @@ body.dark {
 
 /* ── Gear button ── */
 #settingsBtn {
-  /* Reset global button styles */
   width: auto;
   margin-top: 0;
   text-transform: none;
@@ -2126,7 +2125,7 @@ body.dark {
 }
 #settingsBtn::after {
   display: none;
-} /* suppress global button shimmer */
+}
 
 /* ── Overlay ── */
 #settingsOverlay {
@@ -2185,7 +2184,6 @@ body.dark {
 
 /* ── Close button ── */
 .sd-close {
-  /* Reset global button styles */
   width: auto;
   margin-top: 0;
   text-transform: none;
@@ -2242,20 +2240,16 @@ body.dark {
   margin-bottom: 10px;
 }
 
-/* ── Username input row ──
-   KEY FIX: the global `input { width: 100% }` rule prevents
-   flex sizing. We force `width: auto` and set `min-width: 0`
-   so the input can shrink and share space with the Save button.
-── */
+/* ── Username input row ── */
 .sd-input-row {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 .sd-input {
-  flex: 1 1 0; /* grow to fill; start from zero, not content width */
-  min-width: 0; /* allow shrinking past intrinsic width */
-  width: auto !important; /* override global input { width: 100% } */
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto !important;
   padding: 9px 12px;
   border-radius: 8px;
   border: 1.5px solid var(--sd-input-border);
@@ -2269,22 +2263,20 @@ body.dark {
   transition: border-color 0.2s;
 }
 .sd-input:focus {
-  border-color: var(--accent, #6366f1);
+  border-color: var(--accent);
   background: transparent;
-  box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--accent, #6366f1) 15%, transparent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 /* ── Save button ── */
 .sd-save-btn {
-  flex-shrink: 0; /* never compress — always full width */
-  /* Reset global button styles */
+  flex-shrink: 0;
   width: auto;
   margin-top: 0;
   text-transform: none;
   letter-spacing: normal;
   padding: 9px 16px;
-  background: var(--accent, #6366f1);
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -2319,7 +2311,6 @@ body.dark {
 }
 .sd-pill {
   flex: 1;
-  /* Reset global button styles */
   width: auto;
   margin-top: 0;
   text-transform: none;
@@ -2339,7 +2330,7 @@ body.dark {
     background 0.18s;
 }
 .sd-pill:hover {
-  border-color: var(--accent, #6366f1);
+  border-color: var(--accent);
   transform: none;
   box-shadow: none;
 }
@@ -2347,8 +2338,8 @@ body.dark {
   display: none;
 }
 .sd-pill.active {
-  background: var(--accent, #6366f1);
-  border-color: var(--accent, #6366f1);
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
 }
 
@@ -2360,7 +2351,6 @@ body.dark {
   flex-wrap: wrap;
 }
 .sd-swatch {
-  /* Reset global button styles */
   width: 28px !important;
   height: 28px;
   margin-top: 0;
@@ -2383,7 +2373,7 @@ body.dark {
 .sd-swatch.active {
   box-shadow:
     0 0 0 2px var(--sd-bg),
-    0 0 0 4px var(--accent, #6366f1);
+    0 0 0 4px var(--accent);
 }
 .sd-color-custom {
   width: 28px;
@@ -2412,14 +2402,13 @@ body.dark {
 }
 .sd-range {
   flex: 1;
-  /* Reset global input styles */
   width: auto !important;
   margin-top: 0;
   padding: 0;
   border: none;
   background: transparent;
   box-shadow: none;
-  accent-color: var(--accent, #6366f1);
+  accent-color: var(--accent);
   cursor: pointer;
   height: 4px;
 }
@@ -2436,7 +2425,7 @@ body.dark {
   font-size: 1.15rem;
 }
 .sd-badge {
-  background: var(--accent, #6366f1);
+  background: var(--accent);
   color: #fff;
   border-radius: 6px;
   padding: 2px 9px;
@@ -2473,11 +2462,10 @@ body.dark {
   height: 24px;
   flex-shrink: 0;
 }
-/* Hide the native checkbox without disrupting layout */
 .sd-switch input {
   position: absolute;
   opacity: 0;
-  width: 0 !important; /* override global input { width: 100% } */
+  width: 0 !important;
   height: 0;
   margin: 0;
   padding: 0;
@@ -2505,7 +2493,7 @@ body.dark {
   transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .sd-switch input:checked + .sd-track {
-  background: var(--accent, #6366f1);
+  background: var(--accent);
 }
 .sd-switch input:checked + .sd-track::before {
   transform: translateX(20px);
@@ -2513,7 +2501,6 @@ body.dark {
 
 /* ── Reset button ── */
 .sd-reset {
-  /* Reset global button styles */
   width: 100%;
   margin-top: 0;
   text-transform: none;
@@ -2547,14 +2534,4 @@ body.dark {
 }
 .answer-btn {
   font-size: var(--quiz-font-size, 16px) !important;
-}
-
-#settingsBtn {
-  display: flex;
-  align-items: center; /* vertical center */
-  justify-content: center; /* horizontal center */
-}
-
-#settingsIcon {
-  position: static; /* or just remove positioning */
 }

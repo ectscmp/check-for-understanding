@@ -4,29 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quiz URL Builder</title>
-    <!--
-      Theme boot: read the shared localStorage key before first paint
-      so there is never a flash of the wrong theme.
-    -->
-    <script>
-      (function () {
-        try {
-          var s = JSON.parse(localStorage.getItem("quizSettings"));
-          var theme = s && s.theme ? s.theme : "light";
-          if (theme === "system") {
-            theme = window.matchMedia("(prefers-color-scheme: dark)").matches
-              ? "dark"
-              : "light";
-          }
-          document.documentElement.classList.add(theme);
-        } catch (_) {
-          document.documentElement.classList.add("light");
-        }
-      })();
-    </script>
     <link rel="stylesheet" href="./css/style.css" />
+    <script src="./js/theme.js"></script>
   </head>
   <body>
+    <script>
+      ThemeManager.applyStored();
+    </script>
+
     <header class="top-bar">
       <div>
         <h1 style="text-align: left; margin: 0; font-size: 1.25rem">
@@ -196,70 +181,10 @@
     </footer>
 
     <script>
-      /* =====================
-         THEME
-         Reads and writes the shared "quizSettings" localStorage key
-         so theme persists across join, admin, and helper pages.
-      ===================== */
-      function getThemeSetting() {
-        try {
-          const s = JSON.parse(localStorage.getItem("quizSettings"));
-          return s && s.theme ? s.theme : "light";
-        } catch {
-          return "light";
-        }
-      }
+      /* Wire up theme toggle — ThemeManager is already loaded from theme.js */
+      ThemeManager.bindToggle("themeToggle");
 
-      function setThemeSetting(theme) {
-        try {
-          const s = JSON.parse(localStorage.getItem("quizSettings")) || {};
-          s.theme = theme;
-          localStorage.setItem("quizSettings", JSON.stringify(s));
-        } catch {
-          localStorage.setItem("quizSettings", JSON.stringify({ theme }));
-        }
-      }
-
-      function resolveTheme(theme) {
-        if (theme === "system") {
-          return window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light";
-        }
-        return theme;
-      }
-
-      function applyTheme(theme) {
-        const resolved = resolveTheme(theme);
-        document.body.classList.remove("light", "dark");
-        document.body.classList.add(resolved);
-        // Keep <html> class in sync with the boot script
-        document.documentElement.classList.remove("light", "dark");
-        document.documentElement.classList.add(resolved);
-        const btn = document.getElementById("themeToggle");
-        if (btn) btn.textContent = resolved === "light" ? "🌙" : "☀️";
-      }
-
-      // Apply on load (boot script already set <html> class; this syncs <body> + button label)
-      applyTheme(getThemeSetting());
-
-      // Keep in sync if OS preference changes (for "system" mode)
-      window
-        .matchMedia("(prefers-color-scheme: dark)")
-        .addEventListener("change", () => {
-          if (getThemeSetting() === "system") applyTheme("system");
-        });
-
-      document.getElementById("themeToggle").onclick = () => {
-        const current = resolveTheme(getThemeSetting());
-        const next = current === "light" ? "dark" : "light";
-        setThemeSetting(next);
-        applyTheme(next);
-      };
-
-      /* =====================
-         SAMPLE DATA
-      ===================== */
+      /* ── Sample data ── */
       const SAMPLE = [
         {
           question: "What is the capital of France?",
@@ -287,10 +212,9 @@
 
       function renderSample() {
         const raw = JSON.stringify(SAMPLE, null, 2);
-        const highlighted = raw
+        document.getElementById("sampleJson").innerHTML = raw
           .replace(/"([^"]+)":/g, '<span class="sk">"$1"</span>:')
           .replace(/: "([^"]+)"/g, ': <span class="sv">"$1"</span>');
-        document.getElementById("sampleJson").innerHTML = highlighted;
       }
       renderSample();
 
@@ -303,9 +227,7 @@
         validateJSON();
       }
 
-      /* =====================
-         LIVE JSON VALIDATION
-      ===================== */
+      /* ── Live JSON validation ── */
       document
         .getElementById("jsonInput")
         .addEventListener("input", validateJSON);
@@ -314,25 +236,21 @@
         const raw = document.getElementById("jsonInput").value.trim();
         const statusEl = document.getElementById("jsonStatus");
         const countEl = document.getElementById("questionCount");
-
         if (!raw) {
           statusEl.style.display = "none";
           countEl.textContent = "";
           return null;
         }
-
         try {
           const parsed = JSON.parse(raw);
           const arr = Array.isArray(parsed) ? parsed : parsed.quiz || null;
-
-          if (!arr || !Array.isArray(arr)) {
+          if (!arr) {
             statusEl.className = "helper-badge helper-badge-warn";
             statusEl.textContent = "⚠ Needs array or {quiz:[]}";
             statusEl.style.display = "inline-flex";
             countEl.textContent = "";
             return null;
           }
-
           const valid = arr.filter(
             (q) => q.question && (q.choices || q.options),
           );
@@ -341,7 +259,7 @@
           statusEl.style.display = "inline-flex";
           countEl.textContent = `${valid.length} question${valid.length !== 1 ? "s" : ""} detected`;
           return arr;
-        } catch {
+        } catch (_) {
           statusEl.className = "helper-badge helper-badge-err";
           statusEl.textContent = "✗ Invalid JSON";
           statusEl.style.display = "inline-flex";
@@ -350,9 +268,7 @@
         }
       }
 
-      /* =====================
-         GENERATE URL
-      ===================== */
+      /* ── Generate URL ── */
       let generatedURL = null;
 
       function generateURL() {
@@ -363,19 +279,16 @@
           setTimeout(() => (ta.style.borderColor = ""), 800);
           return;
         }
-
         const roomName =
           document.getElementById("roomName").value.trim() || "My Quiz";
         const roomCode = document
           .getElementById("roomCode")
           .value.trim()
           .toUpperCase();
-
         const params = new URLSearchParams();
         if (roomCode) params.set("code", roomCode);
         params.set("name", roomName);
         params.set("quiz", JSON.stringify(quizArr));
-
         generatedURL = `${window.location.origin}/create?${params.toString()}`;
 
         const urlEl = document.getElementById("urlOutput");
@@ -394,10 +307,8 @@
           joinEl.classList.add("empty");
           joinEl.textContent = "Set a room code to get a join link";
         }
-
         document.getElementById("copyBtn").disabled = false;
         document.getElementById("openBtn").disabled = false;
-
         renderBreakdown(roomCode, roomName, quizArr.length);
         renderPreview(quizArr);
       }
@@ -411,70 +322,46 @@
         ];
         document.getElementById("breakdown").innerHTML = rows
           .map(
-            (r) => `
-              <div class="helper-breakdown-row">
-                <span class="helper-breakdown-key">${r.key}</span>
-                <span class="helper-breakdown-val" title="${r.val}">${r.val}</span>
-              </div>
-            `,
+            (r) =>
+              `<div class="helper-breakdown-row"><span class="helper-breakdown-key">${r.key}</span><span class="helper-breakdown-val" title="${r.val}">${r.val}</span></div>`,
           )
           .join("");
       }
 
-      /* =====================
-         PREVIEW
-      ===================== */
+      /* ── Preview ── */
       function renderPreview(quizArr) {
         const section = document.getElementById("previewSection");
         const list = document.getElementById("previewList");
         const count = document.getElementById("previewCount");
-
         count.textContent = `${quizArr.length} question${quizArr.length !== 1 ? "s" : ""}`;
-
         list.innerHTML = quizArr
           .map((q, i) => {
             let options = [];
             if (q.choices) {
-              const { correct, ...wrongs } = q.choices;
-              options = [
-                { text: correct, isCorrect: true },
-                ...Object.values(wrongs)
-                  .filter(Boolean)
-                  .map((w) => ({ text: w, isCorrect: false })),
-              ];
+              options.push({ text: q.choices.correct, isCorrect: true });
+              Object.keys(q.choices).forEach((k) => {
+                if (k !== "correct" && q.choices[k])
+                  options.push({ text: q.choices[k], isCorrect: false });
+              });
             } else if (q.options) {
               options = q.options.map((o) => ({
                 text: o,
                 isCorrect: o === q.correctAnswer,
               }));
             }
-
-            return `
-              <div class="helper-q-card">
-                <span class="helper-q-number">Q${i + 1}</span>
-                <div class="helper-q-text">${escapeHTML(q.question)}</div>
-                <div class="helper-q-options">
-                  ${options
-                    .map(
-                      (opt) => `
-                      <div class="helper-q-option ${opt.isCorrect ? "correct" : ""}">
-                        ${escapeHTML(opt.text)}
-                      </div>
-                    `,
-                    )
-                    .join("")}
-                </div>
-              </div>
-            `;
+            return `<div class="helper-q-card">
+            <span class="helper-q-number">Q${i + 1}</span>
+            <div class="helper-q-text">${escapeHTML(q.question)}</div>
+            <div class="helper-q-options">
+              ${options.map((o) => `<div class="helper-q-option${o.isCorrect ? " correct" : ""}">${escapeHTML(o.text)}</div>`).join("")}
+            </div>
+          </div>`;
           })
           .join("");
-
         section.style.display = "block";
       }
 
-      /* =====================
-         COPY / OPEN
-      ===================== */
+      /* ── Copy / Open ── */
       function copyURL() {
         if (!generatedURL) return;
         navigator.clipboard
