@@ -117,6 +117,13 @@ window
     if (s.theme === "system") applySettings(s);
   });
 
+window.addEventListener("storage", (event) => {
+  if (event.key !== "quizSettings") return;
+  const s = loadSettings();
+  applySettings(s);
+  syncSettingsUI(s);
+});
+
 /* ── Drawer open / close ── */
 const drawer = document.getElementById("settingsDrawer");
 const overlay = document.getElementById("settingsOverlay");
