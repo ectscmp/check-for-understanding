@@ -5,16 +5,10 @@
     <title>Admin Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="./css/style.css" />
-    <!-- theme.js defines window.ThemeManager synchronously.
-         Loading it here (before <body>) means applyStored() can
-         be called the instant the parser opens <body>. -->
     <script src="./js/theme.js"></script>
   </head>
 
   <body>
-    <!-- First thing in <body>: document.body now exists.
-         applyStored() reads localStorage and stamps body.light
-         or body.dark before the browser renders anything. -->
     <script>
       ThemeManager.applyStored();
     </script>
@@ -26,9 +20,7 @@
       <div class="top-bar-actions">
         <a href="/join"><button id="backbtn">Join a Quiz</button></a>
         <a href="/helper"><button id="helperBtn">🛠 URL Builder</button></a>
-        <button id="settingsBtn" title="Settings" aria-label="Open settings">
-          <span id="settingsIcon">⚙️</span>
-        </button>
+        <button id="settingsBtn" title="Settings">⚙️</button>
         <button id="Information">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -226,22 +218,19 @@
     </div>
     <div id="adminReportContainer"></div>
 
-
+    <!-- ═══════════════════════════════════════
+         SETTINGS DRAWER
+    ═══════════════════════════════════════ -->
     <div id="settingsOverlay"></div>
 
     <div id="settingsDrawer">
       <div class="sd-header">
         <h2>⚙️ Settings</h2>
-        <button
-          class="sd-close"
-          id="closeSettingsBtn"
-          aria-label="Close settings"
-        >
-          ✕
-        </button>
+        <button class="sd-close" id="closeSettingsBtn">✕</button>
       </div>
 
       <div class="sd-body">
+        <!-- Theme -->
         <div class="sd-section">
           <span class="sd-label">Theme</span>
           <div class="sd-pills">
@@ -249,33 +238,137 @@
             <button class="sd-pill" data-theme="dark">🌙 Dark</button>
             <button class="sd-pill" data-theme="system">💻 System</button>
           </div>
-          <p
-            style="font-size: 0.75rem; color: var(--sd-muted); margin: 10px 0 0"
-          >
-            Uses the same saved preference as the join and helper pages.
-          </p>
+        </div>
+
+        <!-- Accent colour -->
+        <div class="sd-section">
+          <span class="sd-label">Accent Color</span>
+          <div class="sd-swatches">
+            <button
+              class="sd-swatch"
+              data-color="#10b981"
+              style="background: #10b981"
+              title="Emerald"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#6366f1"
+              style="background: #6366f1"
+              title="Indigo"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#f43f5e"
+              style="background: #f43f5e"
+              title="Rose"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#f59e0b"
+              style="background: #f59e0b"
+              title="Amber"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#3b82f6"
+              style="background: #3b82f6"
+              title="Blue"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#a855f7"
+              style="background: #a855f7"
+              title="Purple"
+            ></button>
+            <button
+              class="sd-swatch"
+              data-color="#ec4899"
+              style="background: #ec4899"
+              title="Pink"
+            ></button>
+            <input
+              type="color"
+              class="sd-color-custom"
+              id="customAccentPicker"
+              title="Custom color"
+            />
+          </div>
+        </div>
+
+        <!-- Font size -->
+        <div class="sd-section">
+          <span class="sd-label">Font Size</span>
+          <div class="sd-range-row">
+            <span class="sd-size-a">A</span>
+            <input
+              type="range"
+              class="sd-range"
+              id="fontSizeRange"
+              min="13"
+              max="22"
+              step="1"
+            />
+            <span class="sd-size-a big">A</span>
+            <span class="sd-badge" id="fontSizeValue">16px</span>
+          </div>
+        </div>
+
+        <!-- Toggles -->
+        <div class="sd-section">
+          <div class="sd-toggle-row" style="margin-bottom: 14px">
+            <div class="sd-toggle-info">
+              <strong>Confirm answers</strong>
+              <p>Ask before submitting</p>
+            </div>
+            <label class="sd-switch">
+              <input type="checkbox" id="setting-confirm" />
+              <span class="sd-track"></span>
+            </label>
+          </div>
+          <div class="sd-toggle-row" style="margin-bottom: 14px">
+            <div class="sd-toggle-info">
+              <strong>Sound effects</strong>
+              <p>Play audio on correct / wrong</p>
+            </div>
+            <label class="sd-switch">
+              <input type="checkbox" id="setting-sounds" />
+              <span class="sd-track"></span>
+            </label>
+          </div>
+          <div class="sd-toggle-row" style="margin-bottom: 14px">
+            <div class="sd-toggle-info">
+              <strong>Keyboard shortcuts</strong>
+              <p>Press 1–4 to answer</p>
+            </div>
+            <label class="sd-switch">
+              <input type="checkbox" id="setting-keyboard" />
+              <span class="sd-track"></span>
+            </label>
+          </div>
+          <div class="sd-toggle-row">
+            <div class="sd-toggle-info">
+              <strong>Show progress</strong>
+              <p>Display answer count</p>
+            </div>
+            <label class="sd-switch">
+              <input type="checkbox" id="setting-progress" />
+              <span class="sd-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Reset -->
+        <div class="sd-section">
+          <button class="sd-reset" id="resetSettingsBtn">
+            ↺ Reset to defaults
+          </button>
         </div>
       </div>
     </div>
+    <!-- end settings drawer -->
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/admin.js" defer></script>
-
-    <footer class="footer">
-      <div class="footer-content">
-        <h3 id="footer-text">Developed by Coby Hughes</h3>
-        <a
-          href="https://github.com/c-o-b-a-x"
-          target="_blank"
-          class="github-link"
-        >
-          <img
-            src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
-            alt="GitHub Logo"
-            class="github-logo"
-          />
-        </a>
-      </div>
-    </footer>
+    <script src="js/settings.js" defer></script>
   </body>
 </html>
