@@ -14,6 +14,8 @@ const addQuestionBtn = document.getElementById("addQuestionBtn");
 const shareBox = document.getElementById("shareBox");
 const shareUrlEl = document.getElementById("shareUrl");
 const copyLinkBtn = document.getElementById("copyLinkBtn");
+const downloadReportBtn = document.getElementById("downloadReportBtn");
+const downloadTypeSelect = document.getElementById("downloadTypeSelect");
 
 let currentRoom = null;
 window.lastQuizData = null;
@@ -89,8 +91,6 @@ copyLinkBtn.addEventListener("click", () => {
 });
 
 /* =====================
-<<<<<<< HEAD
-=======
    SETTINGS
    Reuses the shared "quizSettings" localStorage key so
    the admin, join, and helper pages stay in sync.
@@ -203,7 +203,6 @@ document.querySelectorAll(".sd-pill").forEach((pill) => {
 });
 
 /* =====================
->>>>>>> cf09bbed64f5d1e7e06d97a795d4e228472b9315
    QUESTION BUILDER
 ===================== */
 function createQuestionBlock(index) {
@@ -309,7 +308,7 @@ function createRoom(customCode, roomName, isPublic, quizData) {
     [
       "json",
       "create",
-      "downloadReportBtn",
+      "downloadControls",
       "nameListContainer",
       "namelist",
       "startHeader",
@@ -510,7 +509,7 @@ endQuizBtn.addEventListener("click", () => {
     [
       "json",
       "create",
-      "downloadReportBtn",
+      "downloadControls",
       "nameListContainer",
       "namelist",
       "startHeader",
@@ -576,17 +575,78 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =====================
    DOWNLOAD REPORT
 ===================== */
-document.getElementById("downloadReportBtn").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(lastReportData, null, 2)], {
-    type: "application/json",
-  });
+function triggerDownload(fileName, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement("a"), {
     href: url,
-    download: "quiz-report.json",
+    download: fileName,
   });
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function escapeCsv(value) {
+  const str = String(value ?? "");
+  return `"${str.replace(/"/g, '""')}"`;
+}
+
+function buildReportCsv(reports) {
+  const maxQuestions = reports.reduce(
+    (max, report) => Math.max(max, report.questions?.length || 0),
+    0,
+  );
+  const headers = [
+    "Name",
+    ...Array.from({ length: maxQuestions }, (_, i) => `Q${i + 1}`),
+    "Total Correct",
+    "Total Possible",
+  ];
+
+  const rows = reports.map((report) => {
+    const qResults = Array.from({ length: maxQuestions }, (_, index) => {
+      const q = report.questions?.[index];
+      if (!q) return "";
+      return q.isCorrect ? "Right" : "Wrong";
+    });
+    return [
+      report.username || "",
+      ...qResults,
+      report.score ?? 0,
+      report.totalQuestions ?? maxQuestions,
+    ];
+  });
+
+  return [headers, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\n");
+}
+
+downloadReportBtn?.addEventListener("click", () => {
+  const selectedType = downloadTypeSelect?.value || "report-json";
+
+  if (selectedType === "report-json") {
+    if (!lastReportData.length) {
+      alert("No report data available yet. End the quiz first.");
+      return;
+    }
+    triggerDownload(
+      "quiz-report.json",
+      JSON.stringify(lastReportData, null, 2),
+      "application/json",
+    );
+    return;
+  }
+
+  if (selectedType === "report-csv") {
+    if (!lastReportData.length) {
+      alert("No report data available yet. End the quiz first.");
+      return;
+    }
+    const csv = buildReportCsv(lastReportData);
+    triggerDownload("quiz-report.csv", csv, "text/csv;charset=utf-8");
+    return;
+  }
+
+  alert("Please choose a valid report format.");
 });
 
 /* =====================

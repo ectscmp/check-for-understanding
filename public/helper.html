@@ -77,7 +77,12 @@
             <button class="helper-generate-btn" onclick="generateURL()">
               ⚡ Generate URL
             </button>
-
+            <button class="helper-open-btn" onclick="downloadQuizJSON()">
+              Download Quiz JSON
+            </button>
+            <button class="helper-open-btn" onclick="openPrintableWorksheet()">
+              Printable Worksheet
+            </button>
             <details style="margin-top: 16px">
               <summary class="helper-sample-toggle">
                 📋 Sample JSON format
@@ -533,6 +538,114 @@
         if (generatedURL) window.open(generatedURL, "_blank");
       }
 
+      function downloadQuizJSON() {
+        const quizArr = validateJSON();
+        if (!quizArr) {
+          showToast("Invalid JSON");
+          const ta = document.getElementById("jsonInput");
+          ta.style.borderColor = "#ef4444";
+          setTimeout(() => (ta.style.borderColor = ""), 800);
+          return;
+        }
+
+        const blob = new Blob([JSON.stringify(quizArr, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = Object.assign(document.createElement("a"), {
+          href: url,
+          download: "quiz-data.json",
+        });
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Downloaded quiz JSON");
+      }
+
+      function buildWorksheetHtml(quizArr) {
+        const questionBlocks = quizArr
+          .map((q, index) => {
+            const options = [];
+            if (q.choices) {
+              options.push(q.choices.correct);
+              Object.keys(q.choices).forEach((key) => {
+                if (key !== "correct" && q.choices[key]) options.push(q.choices[key]);
+              });
+            } else if (Array.isArray(q.options)) {
+              options.push(...q.options);
+            }
+
+            const optionsHtml = options.length
+              ? `<ul>${options.map((option) => `<li>${escapeHTML(option)}</li>`).join("")}</ul>`
+              : `<div class="worksheet-line"></div>`;
+
+            return `
+              <section class="worksheet-question">
+                <h2>Q${index + 1}. ${escapeHTML(q.question || "")}</h2>
+                ${optionsHtml}
+                <div class="worksheet-line"></div>
+              </section>
+            `;
+          })
+          .join("");
+
+        return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quiz Worksheet</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+      h1 { margin: 0 0 6px; font-size: 24px; }
+      .meta { margin: 0 0 16px; font-size: 13px; color: #333; }
+      .toolbar { margin: 0 0 18px; display: flex; gap: 8px; }
+      .toolbar button { padding: 8px 12px; font-size: 13px; cursor: pointer; }
+      .worksheet-question { margin: 0 0 20px; page-break-inside: avoid; }
+      .worksheet-question h2 { font-size: 17px; margin: 0 0 10px; }
+      .worksheet-question ul { margin: 0 0 12px 18px; padding: 0; }
+      .worksheet-question li { margin: 4px 0; line-height: 1.5; }
+      .worksheet-line { border-bottom: 1px solid #bbb; height: 18px; margin-top: 8px; }
+      @media print {
+        .toolbar { display: none; }
+        body { margin: 12mm; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Quiz Worksheet</h1>
+    <p class="meta">Questions: ${quizArr.length}</p>
+    <div class="toolbar">
+      <button onclick="window.print()">Print Worksheet</button>
+    </div>
+    ${questionBlocks}
+  </body>
+</html>`;
+      }
+
+      function openPrintableWorksheet() {
+        const quizArr = validateJSON();
+        if (!quizArr) {
+          showToast("Invalid JSON");
+          const ta = document.getElementById("jsonInput");
+          ta.style.borderColor = "#ef4444";
+          setTimeout(() => (ta.style.borderColor = ""), 800);
+          return;
+        }
+
+        const worksheetHtml = buildWorksheetHtml(quizArr);
+        const worksheetBlob = new Blob([worksheetHtml], {
+          type: "text/html;charset=utf-8",
+        });
+        const worksheetUrl = URL.createObjectURL(worksheetBlob);
+        const worksheetWindow = window.open(worksheetUrl, "_blank");
+        if (!worksheetWindow) {
+          URL.revokeObjectURL(worksheetUrl);
+          showToast("Allow pop-ups to open worksheet");
+          return;
+        }
+        setTimeout(() => URL.revokeObjectURL(worksheetUrl), 60000);
+      }
+
       function showToast(msg) {
         const t = document.getElementById("helperToast");
         t.textContent = msg;
@@ -558,3 +671,4 @@
     <script src="js/settings.js"></script>
   </body>
 </html>
+

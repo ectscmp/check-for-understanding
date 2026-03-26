@@ -149,7 +149,15 @@
         <h3 class="hidden" id="startHeader">Start Quiz</h3>
         <button class="hidden" id="startQuizBtn">Start Quiz</button>
         <button class="hidden" id="endQuizBtn">End Quiz</button>
-        <button class="hidden" id="downloadReportBtn">Download Report</button>
+        <div class="hidden" id="downloadControls">
+          <div class="download-select-wrap">
+            <select id="downloadTypeSelect">
+              <option value="report-json">Report (JSON)</option>
+              <option value="report-csv">Report (CSV)</option>
+            </select>
+          </div>
+          <button id="downloadReportBtn">Download Selected</button>
+        </div>
 
         <h1 class="hidden" id="nameListContainer">Name List</h1>
         <p class="hidden" id="namelist"></p>
