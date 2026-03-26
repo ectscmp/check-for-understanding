@@ -2534,3 +2534,377 @@ body.dark {
 .answer-btn {
   font-size: var(--quiz-font-size, 16px) !important;
 }
+
+/* =========================
+   RESPONSIVE LAYOUT TUNING
+   Scale, spacing, and positioning only.
+   ========================= */
+@media (max-width: 1024px) {
+  main {
+    padding: 22px 16px;
+  }
+
+  .top-bar {
+    padding: 12px 16px;
+  }
+
+  .top-bar h1 {
+    font-size: 1.6rem;
+    margin-bottom: 0;
+  }
+
+  .dashboard {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .card {
+    max-width: 100%;
+    padding: 20px;
+  }
+
+  #playerReportContainer {
+    margin: 18px 12px;
+    padding: 22px 18px;
+  }
+
+  .helper-page {
+    padding: 28px 16px 50px;
+  }
+
+  .helper-field-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .owner-panel {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0 0;
+  }
+
+  .sidebar-header {
+    padding: 0 14px 12px;
+    margin-bottom: 0;
+  }
+
+  .nav-menu {
+    display: flex;
+    overflow-x: auto;
+    padding: 8px 10px 10px;
+    gap: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    margin: 0;
+    padding: 9px 12px;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .nav-item:hover,
+  .nav-item.active {
+    border-left: none;
+  }
+
+  .nav-item.active {
+    border-bottom-color: var(--accent);
+  }
+
+  .main-content {
+    padding: 20px 16px;
+  }
+
+  .section-header {
+    margin-bottom: 22px;
+  }
+
+  .section-header h1 {
+    font-size: 1.7rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 18px 16px;
+  }
+
+  .data-table {
+    overflow-x: auto;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 11px 12px;
+  }
+
+  .auth-box {
+    width: min(420px, calc(100% - 28px));
+    padding: 34px 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  main {
+    padding: 16px 12px;
+  }
+
+  h1 {
+    font-size: 1.55rem;
+    margin-bottom: 20px;
+  }
+
+  .top-bar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .top-bar-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .top-bar-actions button,
+  .top-bar-actions a,
+  #helperBtn,
+  #backbtn,
+  #Information {
+    margin-top: 0;
+  }
+
+  .top-bar-actions button,
+  #helperBtn,
+  #backbtn,
+  #Information {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 0.76rem;
+  }
+
+  .card {
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .room-item {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .room-info {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .room-actions {
+    width: 100%;
+  }
+
+  .room-actions button {
+    flex: 1 1 120px;
+  }
+
+  .footer-content {
+    gap: 8px;
+    font-size: 0.7rem;
+    letter-spacing: 0.11em;
+  }
+
+  .modal {
+    padding: 12px;
+  }
+
+  .modal-content {
+    padding: 22px 16px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .share-row,
+  .helper-output-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .copy-btn,
+  .helper-copy-btn {
+    width: 100%;
+    padding: 9px 12px;
+  }
+
+  .helper-page {
+    padding: 20px 12px 40px;
+  }
+
+  .helper-page h2 {
+    font-size: 1.2rem;
+  }
+
+  .helper-card-body {
+    padding: 14px;
+  }
+
+  .helper-field textarea {
+    min-height: 240px;
+  }
+
+  .helper-breakdown-row {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .helper-breakdown-val {
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+    text-align: left;
+  }
+
+  #playerReportContainer {
+    margin: 14px 10px;
+    padding: 16px 14px;
+  }
+
+  #playerReportContainer h2 {
+    font-size: 1.3rem;
+  }
+
+  #downloadPlayerReportBtn {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .action-buttons {
+    gap: 8px;
+  }
+
+  .action-buttons .btn {
+    width: 100%;
+  }
+
+  .main-content {
+    padding: 14px 12px 18px;
+  }
+
+  .section-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .section-header p {
+    font-size: 0.82rem;
+  }
+
+  .stat-card .value {
+    font-size: 1.8rem;
+  }
+
+  .logs-terminal {
+    height: 280px;
+    padding: 14px;
+  }
+
+  .auth-screen {
+    align-items: flex-start;
+    padding-top: 8vh;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .auth-box {
+    width: calc(100% - 20px);
+    padding: 28px 18px;
+  }
+
+  #settingsDrawer {
+    width: 100vw;
+  }
+}
+
+@media (max-width: 480px) {
+  main {
+    padding: 14px 10px;
+  }
+
+  .top-bar {
+    padding: 10px;
+  }
+
+  .top-bar h1 {
+    font-size: 1.3rem;
+  }
+
+  .top-bar-actions button,
+  #helperBtn,
+  #backbtn,
+  #Information {
+    width: 100%;
+  }
+
+  .card,
+  .modal-content {
+    padding: 14px;
+  }
+
+  .helper-page .helper-subtitle {
+    font-size: 0.78rem;
+    margin-bottom: 18px;
+  }
+
+  .helper-q-card {
+    padding: 12px;
+  }
+
+  .helper-q-text {
+    font-size: 0.84rem;
+    padding-right: 28px;
+  }
+
+  .helper-q-number {
+    top: 9px;
+    right: 10px;
+  }
+
+  .sd-header {
+    padding: 14px 16px;
+  }
+
+  .sd-section {
+    padding: 14px 16px;
+  }
+
+  .sd-pills {
+    gap: 6px;
+  }
+
+  .sd-pill {
+    padding: 8px 4px;
+    font-size: 0.78rem;
+  }
+
+  .sd-toggle-row {
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
